@@ -123,15 +123,19 @@ ui <- fluidPage(
                       actionButton("calcparam", "Calculate/update parameters"))
                ),
              fluidRow(
+               h2("Per-fly curve calculation"),
+               column(3,
+                      actionButton("sequentialcalc", "Calculate per-fly curves"))
+             ),
+             fluidRow(
                h2("Random fly selection"),
-               column(4,
+               column(3,
                       numericInput("randomno", "How many flies to randomly sample?", value = 10, min = 1, step = 1, max = 20)),
-               column(4,
+               column(3,
                       numericInput("times", "How many times to repeat calculations??", value = 10, min = 1, step = 1, max = 20)),
-               column(4,
+               column(3,
                       actionButton("randomcalc", "Select x flies randomly and calculate parameters"))
              ),
-             
     ),
     tabPanel("Visualise results",
              fluidRow(column(2,
@@ -554,6 +558,117 @@ server <- function(input, output, session) {
     j <- j+1
       }
       #i <- i+1
+    }
+  })
+  
+  # Code to sequentially select individual flies and calculate curves for them 
+  observeEvent(input$sequentialcalc, {
+    
+    for(i in as.numeric(input$stimulations)) {
+        values$stim_number <- i
+        showNotification("Retrieving data for stimulation number:", i, type = "message")
+        cat("Retrieving data for stimulation number:", i, "\n")
+        
+        data <- sheet()
+        data$time <- as.numeric(data$time)
+        stim_data <- get_data(data, i, as.numeric(input$pretime), as.numeric(input$prestim), as.numeric(input$stimgap), as.numeric(input$poststim))
+        req(stim_data)  # Ensure data is not NULL before continuing
+        
+        showNotification("Data retrieved successfully.", type = "message")
+        cat("Data retrieved successfully.\n")
+
+        
+        # Selecting individual flies
+        for(fly in 2:ncol(stim_data)) { 
+        if (ncol(stim_data) < 10) {
+          stop("Not enough columns in data")
+        }
+        
+        else{
+          fly_data <- stim_data[, c(1, fly)]
+          #print(stim_data)
+          
+        
+        
+        
+        
+        # Data needs to be tidied into long format
+          fly_data <- fly_data %>% 
+          pivot_longer(!time, names_to = "Group", values_to = "speed")
+        # 60 second time window prior to stimulation taken to calculate the pre-stimulation speed
+        pre_stimuli_avg_speed <- mean(fly_data$speed[1:as.numeric(input$prestim)])
+        # Mean of pre-stimulation speed subtracted from raw speed to give relative speed. Necessary for
+        # curve fitting.
+        fly_data$relative_speed <- fly_data$speed - pre_stimuli_avg_speed
+        
+        showNotification(paste("Optimising parameters for fly", fly, sep = " "), type = "message")
+        cat("Optimising parameters...\n")
+        # Optimizing parameters of the fitted exponential curve.
+        # Initial parameter estimates
+        initial_params <- c(dt = input$prestim, A0 = 0.1, A1 = 2, tauA = 0.1, tauB = 3)
+        
+        optim_results <- optim(
+          par = initial_params,
+          fn = calculate_R_squared,
+          data = fly_data,
+          method = "L-BFGS-B",
+          lower = c(dt = fly_data$time[isolate(input$prestim)-isolate(input$dtflexibility)], A0 = 0, A1 = 0, tauA = -10, tauB = 0),
+          upper = c(dt = fly_data$time[isolate(input$prestim)+isolate(input$dtflexibility)], A0 = 10, A1 = 20, tauA = 20, tauB = 50),
+          control = list(maxit = 9999999)
+        )
+        
+        optimized_params <- optim_results$par
+        names(optimized_params) <- c("dt", "A0", "A1", "tauA", "tauB")
+        
+        # Making a new column in data which contains the predicted speeds - i.e, the speeds calculated
+        # through the exponential model.
+        fly_data$predicted_speeds <- sapply(stim_data$time, function(t) model_function(t, optimized_params["dt"], optimized_params["A0"], optimized_params["A1"], optimized_params["tauA"], optimized_params["tauB"]))
+        fly_data$GOF <- -optim_results$value
+        fly_data$StimNo <- values$stim_number
+        # Find the index of the maximum speeds
+        max_index <- which.max(fly_data$predicted_speeds)
+        max_index_rel <- which.max(fly_data$relative_speed)
+        
+        # Find the time and value of the maximum speeds
+        max_time <- fly_data$time[max_index]
+        max_speed <- fly_data$predicted_speeds[max_index]
+        max_time_rel <- fly_data$time[max_index_rel]
+        max_speed_rel <- fly_data$relative_speed[max_index_rel]
+        
+        # Updating all of the reactive values
+        values$data <- fly_data
+        values$pre_stim_speed <- pre_stimuli_avg_speed
+        values$pre_stim_speed_list <- c(values$pre_stim_speed_list, pre_stimuli_avg_speed)
+        values$optimized_params <- optim_results$par
+        values$optim_results <- optim_results
+        values$max_time <- max_time
+        values$max_speed <- max_speed
+        values$max_speed_list <- c(values$max_speed_list, max_speed)
+        values$max_rel_speed_list <- c(values$max_rel_speed_list, max_speed_rel)
+        values$stim_number_list <- c(values$stim_number_list, values$stim_number)
+        values$max_time_rel <- max_time_rel
+        values$max_speed_rel <- max_speed_rel
+        values$GOFs <- c(values$GOFs, fly_data$GOF[1])
+        values$merged_data <- rbind(values$merged_data, values$data)
+        
+        # Outputting the top of the data table with the newly calculated 
+        output$output <- renderTable({
+          head(values$data)
+        })
+        
+        output$gofoutput <- renderTable({
+          collated_data <- cbind(values$stim_number_list, values$pre_stim_speed_list, values$max_rel_speed_list, values$max_speed_list, values$GOFs)
+          colnames(collated_data) <- c("Stim number", "Mean pre-stim speed", "Max relative amplitude", "Max fitted amplitude", "GOF")
+          collated_data
+        })
+        showNotification("Parameters should now be optimised.", type = "message")
+        cat("Parameters should now be optimised.\n")
+        
+        # clear stimdata 
+        
+        fly_data <- c()
+        }
+        }
     }
   })
   
