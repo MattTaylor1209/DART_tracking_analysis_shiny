@@ -601,7 +601,7 @@ server <- function(input, output, session) {
         # curve fitting.
         fly_data$relative_speed <- fly_data$speed - pre_stimuli_avg_speed
         
-        showNotification(paste("Optimising parameters for fly", fly, sep = " "), type = "message")
+        showNotification(paste("Optimising parameters for", unique(fly_data$Group), sep = " "), type = "message")
         cat("Optimising parameters...\n")
         # Optimizing parameters of the fitted exponential curve.
         # Initial parameter estimates
