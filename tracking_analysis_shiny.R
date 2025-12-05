@@ -56,7 +56,7 @@ calculate_R_squared <- function(params, data) {
     return(-R_squared)
   } else {
     cat("Non-finite R_squared value detected.\n")
-    return(Inf)
+    return(0)
   }
 }
 
