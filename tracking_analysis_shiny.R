@@ -1,5 +1,5 @@
 # Required packages
-packages <- c("tidyverse", "readxl", "shiny", "shinyFiles", "multcomp",
+packages <- c("tidyverse", "readxl", "shiny", "shinyFiles", "shinythemes", "multcomp",
               "ggthemes", "ggpubr", "ggsignif", "lsmeans", 
               "rstatix", "ggtext", "RColorBrewer", "ggsci", "reactlog",
               "minpack.lm")
@@ -68,143 +68,149 @@ calculate_R_squared <- function(params, data) {
 
 
 ui <- fluidPage(
-  tabsetPanel(
-    tabPanel("Import data",
-             fluidRow(
-               h2("File input"),
-               column(6,
-                      shinyFilesButton("file", "Choose File", "Upload", multiple = FALSE),
-                      verbatimTextOutput("inputfile", placeholder = TRUE)
-               )
-             ),
-             fluidRow(
-               h2("Selections"),
-               column(3,
-                      selectInput("data", "Data", choices = NULL)
-               ),
-               column(3,
-                      selectInput("group", "Select Group (only 1 for calculations)", multiple = TRUE, c("test"))),
-               column(3,
-                      numericInput("numberstim", "How many stimulations in total?", value = 6, min = 1, step = 1)),
-               column(3,
-                      selectInput("stimulations", "Select stimulation number(s)", choices = NULL, multiple = TRUE))
-             ),
-             fluidRow(
-               h2("Set defaults"),
-               column(6,
-                      actionButton("resethabit", "Set habituation default")),
-               column(6,
-                      actionButton("resetramp", "Set ramp default"))
-             ),
-             fluidRow(
-               h2("Parameter settings"),
-               column(3,
-                      numericInput("pretime", "Time window before stimulation (minutes)",
-                                   min = 0, max = 30, step = 1, value = 2)),
-               column(3,
-                      numericInput("prestim", "Pre-stimulation time window for calculations (seconds)", 
-                                   min = 5, max = 300, step = 10, value = 60)),
-               column(3,
-                      numericInput("stimgap", "Time gap between stimulations (seconds)", 
-                                   min = 10, max = 3600, step = 10, value = 150)),
-               column(3,
-                      numericInput("poststim", "Post-stimluation time window for calculations (seconds)", 
-                                   min = 10, max = 300, step = 10, value = 120))
-             ),
-             fluidRow(column(6,
-                             tableOutput("output")),
-                      column(4,
-                             tableOutput("gofoutput")),
-                      column(2,
-                             actionButton("cleartable", HTML('Clear tables<br>(do this between groups<br>or when changing stims)')))
-             ),
-             fluidRow(
-               column(12,
-                      actionButton("calcparam", "Calculate/update parameters"))
-               ),
-             fluidRow(
-               h2("Per-fly curve calculation"),
-               column(3,
-                      actionButton("sequentialcalc", "Calculate per-fly curves"))
-             ),
-             fluidRow(
-               h2("Random fly selection"),
-               column(3,
-                      numericInput("randomno", "How many flies to randomly sample?", value = 10, min = 1, step = 1, max = 20)),
-               column(3,
-                      numericInput("times", "How many times to repeat calculations??", value = 10, min = 1, step = 1, max = 20)),
-               column(3,
-                      actionButton("randomcalc", "Select x flies randomly and calculate parameters"))
-             ),
+  shinythemes::themeSelector(),
+  titlePanel("DART data analysis and curve fitting"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      width = 3, 
+      tags$h4("Calculation options"),
+      numericInput("dtflexibility", "dt flexibility:", min = 0, max = 10, step = 0.5, value = 2),
+      tags$hr(),
+      
+      tags$h4("Plotting options"),
+      numericInput("ylimit", "y-axis upper limit:", min = 1, max = 20, step = 1, value = 5),
+      numericInput("ylowlimit", "y-axis lower limit:", min = -10, max = 5, step = 1, value = -1), 
+      numericInput("axislinewidth", "Axis line width:", min = 0.1, max = 5, step = 0.1, value = 1),
+      numericInput("axistitlefontsize", "Axis title font size:", min = 0, max = 60, step = 1, value = 22),
+      numericInput("axistextfontsize", "Axis text font size:", min = 0, max = 60, step = 1, value = 20),
+      numericInput("plottitlefontsize", "Plot title font size:", min = 0, max = 60, step = 1, value = 0),
+      numericInput("legendtextfontsize", "Legend text font size:", min = 0, max = 60, step = 1, value = 18),
+      numericInput("legendtitlefontsize", "Legend title font size:", min = 0, max = 60, step = 1, value = 18),
+      numericInput("keysize", "Legend key size:", min = 0, max = 20, step = 0.5, value = 1.5),
+      numericInput("keywidth", "Legend key width:", min = 0, max = 20, step = 0.5, value = 4),
+      numericInput("rawlinewidth", "Raw speed line thickness:", min = 0, max = 10, step = 0.1, value = 0.5),
+      numericInput("plotlinewidth", "Relative speed line thickness:", min = 0, max = 10, step = 0.1, value = 0.5),
+      numericInput("fitlinewidth", "Fit line thickness:", min = 0, max = 10, step = 0.1, value = 1.5)
     ),
-    tabPanel("Visualise results",
-             fluidRow(column(2,
-                             actionButton("plotgraph", "Update Graphs")
-             ),
-             column(2,
-                    numericInput("ylimit", "y-axis upper limit:", min = 1, max = 20, step = 1, value = 5)),
-             column(2,
-                    numericInput("ylowlimit", "y-axis lower limit:", min = -10, max = 5, step = 1, value = -1)),
-             column(2,
-                    numericInput("axistitlefontsize", "Axis title font size:", min = 0, max = 60, step = 1, value = 22)),
-             column(2,
-                    numericInput("axistextfontsize", "Axis text font size:", min = 0, max = 60, step = 1, value = 20)),
-             column(2,
-                    numericInput("plottitlefontsize", "Plot title font size:", min = 0, max = 60, step = 1, value = 0))
-             ),
-             fluidRow(column(2,
-                             numericInput("axislinewidth", "Axis line width:", min = 0.1, max = 5, step = 0.1, value = 1)),
-                      column(2,
-                             numericInput("fittedlabelnudge", "Fitted speed label nudge:", min = -50, max = 100, step = 10, value = 40)),
-                      column(2,
-                             numericInput("relativelabelnudge", "Rel speed label nudge:", min = -50, max = 100, step = 10, value = -30)),
-                      column(2,
-                             numericInput("labelsize", "Label font size:", min = 0, max = 60, step = 1, value = 4)),
-                      column(2,
-                             numericInput("plotlinewidth", "Data line thickness:", min = 0, max = 10, step = 0.1, value = 1)),
-                      column(2,
-                             numericInput("dtflexibility", "dt flexibility:", min = 0, max = 10, step = 0.5, value = 2))
-             ),
-             fluidRow(plotOutput("plotspeed", width = "75%")),
-             fluidRow(plotOutput("plotfit", width = "75%"))
-    ),
-    tabPanel("Data table",
-             fluidRow(tableOutput("datatable"))),
-    tabPanel("Full plot",
-             fluidRow(column(4,
-                             actionButton("plotfull", "Update full data graph"))),
-             fluidRow(plotOutput("fulldata", width = "75%"))),
-    tabPanel("Full fitted plot",
-             fluidRow(column(2,
-                             actionButton("plotfullfitted", "Update full data graph")),
-                      column(2,
-                             numericInput("ylimit", "y-axis upper limit:", min = 1, max = 20, step = 1, value = 5)),
-                      column(2,
-                             numericInput("axislinewidth", "Axis line width:", min = 0.1, max = 5, step = 0.1, value = 1)),
-                      column(2,
-                             numericInput("axistitlefontsize", "Axis title font size:", min = 0, max = 60, step = 1, value = 22)),
-                      column(2,
-                             numericInput("axistextfontsize", "Axis text font size:", min = 0, max = 60, step = 1, value = 20)),
-                      column(2,
-                             numericInput("plottitlefontsize", "Plot title font size:", min = 0, max = 60, step = 1, value = 0))
-             ),
-             fluidRow(
-               column(2,
-                      numericInput("legendtextfontsize", "Legend text font size:", min = 0, max = 60, step = 1, value = 18)),
-               column(2,
-                      numericInput("legendtitlefontsize", "Legend title font size:", min = 0, max = 60, step = 1, value = 18)),
-               column(2,
-                      numericInput("keysize", "Legend key size:", min = 0, max = 20, step = 0.5, value = 1.5)),
-               column(2,
-                      numericInput("keywidth", "Legend key width:", min = 0, max = 20, step = 0.5, value = 4)),
-               column(2,
-                      numericInput("plotlinewidth", "Data line thickness:", min = 0, max = 10, step = 0.1, value = 0.5)),
-               column(2,
-                      numericInput("fitlinewidth", "Fit line thickness:", min = 0, max = 10, step = 0.1, value = 1.5))),
-             fluidRow(plotOutput("fulldatafitted", width = "1200px", height = "600px"))
+    
+    mainPanel(
+      width = 9,
+      tabsetPanel(
+        
+        tabPanel(
+          "Import data",
+          
+          fluidRow(
+            h2("File input"),
+            column(
+              6,
+              shinyFilesButton("file", "Choose File", "Upload", multiple = FALSE),
+              verbatimTextOutput("inputfile")
+            )
+          ),
+          
+          fluidRow(
+            h2("Selections"),
+            column(3, selectInput("data", "Data", choices = NULL)),
+            column(3, selectInput("group", "Select Group (only 1 for calculations)", choices = c("test"), multiple = TRUE)),
+            column(3, numericInput("numberstim", "How many stimulations in total?", value = 6, min = 1, step = 1)),
+            column(3, selectInput("stimulations", "Select stimulation number(s)", choices = NULL, multiple = TRUE))
+          ),
+          
+          fluidRow(
+            h2("Set defaults"),
+            column(6, actionButton("resethabit", "Set habituation default")),
+            column(6, actionButton("resetramp", "Set ramp default"))
+          ),
+          
+          fluidRow(
+            h2("Parameter settings"),
+            column(
+              3,
+              numericInput(
+                "pretime",
+                "Time window before stimulation (minutes)",
+                min = 0, max = 30, step = 1, value = 2
+              )
+            ),
+            column(
+              3,
+              numericInput(
+                "prestim",
+                "Pre-stimulation time window for calculations (seconds)",
+                min = 5, max = 300, step = 10, value = 60
+              )
+            ),
+            column(
+              3,
+              numericInput(
+                "stimgap",
+                "Time gap between stimulations (seconds)",
+                min = 10, max = 3600, step = 10, value = 150
+              )
+            ),
+            column(
+              3,
+              numericInput(
+                "poststim",
+                "Post-stimulation time window for calculations (seconds)",
+                min = 10, max = 300, step = 10, value = 120
+              )
+            )
+          ),
+          
+          fluidRow(
+            column(6, tableOutput("output")),
+            column(4, tableOutput("gofoutput")),
+            column(
+              2,
+              actionButton(
+                "cleartable",
+                HTML("Clear tables<br>(do this between groups<br>or when changing stims)")
+              )
+            )
+          ),
+          
+          fluidRow(
+            column(12, actionButton("calcparam", "Calculate/update parameters"))
+          ),
+          
+          fluidRow(
+            h2("Per-fly curve calculation"),
+            column(3, actionButton("sequentialcalc", "Calculate per-fly curves"))
+          ),
+          
+          fluidRow(
+            h2("Random fly selection"),
+            column(3, numericInput("randomno", "How many flies to randomly sample?", value = 10, min = 1, step = 1, max = 20)),
+            column(3, numericInput("times", "How many times to repeat calculations?", value = 10, min = 1, step = 1, max = 20)),
+            column(3, actionButton("randomcalc", "Select x flies randomly and calculate parameters"))
+          )
+        ),
+        
+        tabPanel(
+          "Data table",
+          fluidRow(tableOutput("datatable"))
+        ),
+        
+        tabPanel(
+          "Raw speed plot",
+          fluidRow(column(4, actionButton("plotfull", "Update full data graph"))),
+          fluidRow(plotOutput("fulldata", width = "90%"))
+        ),
+        
+        tabPanel(
+          "Full fitted plot",
+          fluidRow(column(4, actionButton("plotfullfitted", "Update full fitted data graph"))),
+          fluidRow(plotOutput("fulldatafitted", width = "1200px", height = "600px"))
+        )
+        
+      )
     )
   )
 )
+
 ##### SERVER #####
 
 server <- function(input, output, session) {
@@ -672,66 +678,12 @@ server <- function(input, output, session) {
     }
   })
   
-  # Render plots only when update_graphs changes
-  observeEvent(input$plotgraph, {
-    req(values$data, values$optimized_params)  # Ensure data and parameters are available
-    output$plotspeed <- renderPlot({
-      ggplot(data = isolate(values$data), aes(x = time, y = relative_speed, color = Group)) +
-        geom_line(linewidth = isolate(input$plotlinewidth), color = "blue") +
-        ylim(c(isolate(input$ylowlimit), isolate(input$ylimit)))+
-        labs(title = "Mean Relative Fly Speed Around Vibration", x = "Time (seconds)", y = "Speed (mm/s)") +
-        geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
-        #theme_minimal()+
-        theme(
-          legend.position = "none",
-          aspect.ratio = 0.625,
-          panel.background = element_blank(),
-          axis.text.x=element_markdown(angle=60,hjust=0.5, size = isolate(input$axistextfontsize), vjust = 0.5, face = "bold"),
-          axis.text.y=element_text(size = isolate(input$axistextfontsize), face = "bold"),
-          axis.ticks = element_line(linewidth = 1),
-          axis.title.x = element_markdown(face="bold", size = isolate(input$axistitlefontsize)),
-          axis.title.y = element_markdown(face="bold", size = isolate(input$axistitlefontsize)),
-          plot.title = element_text(size=isolate(input$plottitlefontsize), face="bold.italic", hjust = 0.5),
-          axis.line = element_line(colour = "black", linewidth = isolate(input$axislinewidth))
-        )
-    })
-    
-    output$plotfit <- renderPlot({
-      ggplot(data = isolate(values$data), aes(x = time)) +
-        #theme_minimal()+
-        geom_line(aes(y = relative_speed), color = "blue", linewidth = isolate(input$plotlinewidth)) +
-        geom_line(aes(y = predicted_speeds), color = "red", linewidth = isolate(input$plotlinewidth)) +
-        ylim(c(isolate(input$ylowlimit), isolate(input$ylimit)))+
-        geom_richtext(x = isolate(values$max_time)+isolate(input$fittedlabelnudge), y = isolate(values$max_speed)+0.5, label = sprintf("Max fitted speed:<br> %.3f mm/s at t=%.3f", isolate(values$max_speed), isolate(values$max_time)),
-                      color = "red", size = isolate(input$labelsize), fontface = "bold") +
-        geom_richtext(x = isolate(values$max_time_rel)+isolate(input$relativelabelnudge), y = isolate(values$max_speed_rel)+0.5, label = sprintf("Max relative speed:<br> %.3f mm/s at t=%.3f", isolate(values$max_speed_rel), isolate(values$max_time_rel)),
-                      color = "blue", size = isolate(input$labelsize), fontface = "bold") +
-        labs(title = sprintf("Group: %s. Stimulus no: %s. Model with A0 = %.3f, A1 = %.3f, tauA = %.3f, tauB = %.3f, dt = %.3f, GOF = %.3f", 
-                             isolate(values$data$Group), isolate(values$stim_number), isolate(values$optimized_params["A0"]), isolate(values$optimized_params["A1"]), isolate(values$optimized_params["tauA"]), isolate(values$optimized_params["tauB"]), isolate(values$optimized_params["dt"]), isolate(-values$optim_results$value)),
-             x = "Time (seconds)", y = "Relative Speed (mm/s)") +
-        theme(
-          legend.position = "none",
-          aspect.ratio = 0.625,
-          panel.background = element_blank(),
-          axis.text.x=element_markdown(angle=60,hjust=0.5, size = isolate(input$axistextfontsize), vjust = 0.5, face = "bold"),
-          axis.text.y=element_text(size = isolate(input$axistextfontsize), face = "bold"),
-          axis.ticks = element_line(linewidth = 1),
-          axis.title.x = element_markdown(face="bold", size = isolate(input$axistitlefontsize)),
-          axis.title.y = element_markdown(face="bold", size = isolate(input$axistitlefontsize)),
-          plot.title = element_text(size=isolate(input$plottitlefontsize), face="bold.italic", hjust = 0.5),
-          axis.line = element_line(colour = "black", linewidth = isolate(input$axislinewidth))
-        )
-         
-    })
-    showNotification("Graphs should now be updated.", type = "message")
-    cat("Graphs should now be updated.\n")
-  })
-  
   
   output$datatable <- renderTable({
     req(values$merged_data)
     values$merged_data
   })
+  
   # Plot full data graph when button is pressed:
   observeEvent(input$plotfull, {
     
@@ -750,10 +702,23 @@ server <- function(input, output, session) {
     
     # Plot the graph
     output$fulldata <- renderPlot({
-      ggplot(data = data, aes(x = time, y = speed, color = Group)) +
-        geom_line(linewidth = isolate(input$plotlinewidth)) +
+      
+      # Step 1: Summarize the data dynamically (mean and standard error per time point)
+      summarized_data <- isolate(values$merged_data) %>%
+        group_by(time, StimNo) %>%
+        summarize(
+          mean_speed = mean(predicted_speeds, na.rm = TRUE),
+          mean_raw_speed = mean(speed, na.rm = TRUE),
+          se_speed = sd(predicted_speeds, na.rm = TRUE) / sqrt(n()),
+          mean_rel_speed = mean(relative_speed, na.rm = TRUE)
+        )
+      
+      # Step 2: plot the graph
+      
+      ggplot(data = summarized_data, aes(x = time, y = mean_raw_speed)) +
+        geom_line(linewidth = isolate(input$rawlinewidth), colour = "grey80") +
         ylim(c(isolate(input$ylowlimit), isolate(input$ylimit)))+
-        labs(title = "Mean Movement Speed", x = "Time (seconds)", y = "Speed (mm/s)") +
+        labs(title = "Mean Raw Movement Speed", x = "Time (seconds)", y = "Speed (mm/s)") +
         geom_vline(xintercept = stimulus_locations, linetype = "dashed", color = "black", lwd = 0.5) +
         #theme_minimal()+
         theme(
@@ -795,6 +760,7 @@ server <- function(input, output, session) {
         group_by(time, StimNo) %>%
         summarize(
           mean_speed = mean(predicted_speeds, na.rm = TRUE),
+          mean_raw_speed = mean(speed, na.rm = TRUE),
           se_speed = sd(predicted_speeds, na.rm = TRUE) / sqrt(n()),
           mean_rel_speed = mean(relative_speed, na.rm = TRUE)
         )
@@ -813,8 +779,10 @@ server <- function(input, output, session) {
                     aes(ymin = mean_speed - se_speed, ymax = mean_speed + se_speed, 
                         fill = as.factor(StimNo)), alpha = 0.3, show.legend = FALSE) +
         geom_line(data = summarized_data, aes(y = mean_speed), linewidth = isolate(input$fitlinewidth)) +
+        geom_line(data = summarized_data, aes(y = mean_raw_speed), linewidth = isolate(input$rawlinewidth),
+                  colour = "grey80") +
         
-        ylim(c(-1, isolate(input$ylimit)))+
+        ylim(c(isolate(input$ylowlimit), isolate(input$ylimit)))+
         labs(title = "Mean Relative Movement Speed with Fit", x = "Time (seconds)", y = "Speed (mm/s)") +
         geom_vline(xintercept = stimulus_locations, linetype = "dashed", color = "black", lwd = 0.5) +
         labs(color = "Stimulation number")+
