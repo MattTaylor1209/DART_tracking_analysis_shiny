@@ -1,20 +1,17 @@
-# Required packages
-packages <- c("tidyverse", "readxl", "shiny", "shinyFiles", "shinythemes", "multcomp",
-              "ggthemes", "ggpubr", "ggsignif", "lsmeans", 
-              "rstatix", "ggtext", "RColorBrewer", "ggsci", "reactlog",
-              "minpack.lm")
-
-# Install packages not yet installed
-installed_packages <- packages %in% rownames(installed.packages())
-if (any(installed_packages == FALSE)) {
-  install.packages(packages[!installed_packages],dependencies=TRUE)
-}
+library(shiny)
+library(shinythemes)
+library(readxl)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ggtext)
+library(RColorBrewer)
+library(ggsci)
+library(emmeans)
 
 
 options(shiny.maxRequestSize = 200 * 1024^2)  # 200 MB
-
-# Packages loading
-invisible(lapply(packages, library, character.only = TRUE))
 
 #### FUNCTIONS ####
 
