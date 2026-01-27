@@ -68,7 +68,7 @@ calculate_R_squared <- function(params, data) {
 
 
 ui <- fluidPage(
-  shinythemes::themeSelector(),
+  theme = shinytheme("simplex"),
   titlePanel("DART data analysis and curve fitting"),
   
   sidebarLayout(
