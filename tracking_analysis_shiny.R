@@ -10,6 +10,9 @@ if (any(installed_packages == FALSE)) {
   install.packages(packages[!installed_packages],dependencies=TRUE)
 }
 
+
+options(shiny.maxRequestSize = 200 * 1024^2)  # 200 MB
+
 # Packages loading
 invisible(lapply(packages, library, character.only = TRUE))
 
@@ -91,7 +94,10 @@ ui <- fluidPage(
       numericInput("keywidth", "Legend key width:", min = 0, max = 20, step = 0.5, value = 4),
       numericInput("rawlinewidth", "Raw speed line thickness:", min = 0, max = 10, step = 0.1, value = 0.5),
       numericInput("plotlinewidth", "Relative speed line thickness:", min = 0, max = 10, step = 0.1, value = 0.5),
-      numericInput("fitlinewidth", "Fit line thickness:", min = 0, max = 10, step = 0.1, value = 1.5)
+      numericInput("fitlinewidth", "Fit line thickness:", min = 0, max = 10, step = 0.1, value = 1.5),
+      
+      tags$hr(),
+      downloadButton("download_data", "Download full data")
     ),
     
     mainPanel(
@@ -105,7 +111,12 @@ ui <- fluidPage(
             h2("File input"),
             column(
               6,
-              shinyFilesButton("file", "Choose File", "Upload", multiple = FALSE),
+              fileInput(
+                "file",
+                "Choose Excel file (.xlsx / .xls)",
+                multiple = FALSE,
+                accept = c(".xlsx", ".xls")
+              ),
               verbatimTextOutput("inputfile")
             )
           ),
@@ -214,48 +225,43 @@ ui <- fluidPage(
 ##### SERVER #####
 
 server <- function(input, output, session) {
-  volumes <- getVolumes()
   
-  # Server code to select the main data file
-  shinyFileChoose(input, "file", roots = volumes, session = session)
-  
-  # Printing out the path to the selected file
+  # Print info about the uploaded file
   output$inputfile <- renderPrint({
-    parseFilePaths(volumes, input$file)$datapath
-  })
-  
-  # Reactive expression to track the selected file
-  selected_file <- reactive({
-    # Ensure file selection is not null and extract the path correctly
     req(input$file)
-    file_info <- parseFilePaths(volumes, input$file)
-    if (nrow(file_info) == 0) {
-      return(NULL)
-    }
-    # Extract the first file path
-    file_info$datapath[1]
+    list(
+      name = input$file$name,
+      size_bytes = input$file$size,
+      type = input$file$type
+    )
   })
   
-  # Observe the selected file and update the experiment choices
+  # Path to the uploaded temp file on the server
+  selected_file <- reactive({
+    req(input$file)
+    input$file$datapath
+  })
+  
+  # Update sheet choices when a new file is uploaded
   observeEvent(selected_file(), {
     file_path <- selected_file()
-    req(file_path)
+    
+    # Optional: basic extension check
+    ext <- tolower(tools::file_ext(input$file$name))
+    validate(need(ext %in% c("xlsx", "xls"), "Please upload an .xlsx or .xls file."))
+    
     experiments <- excel_sheets(file_path)
-    updateSelectInput(session, "data", choices = experiments)
+    updateSelectInput(session, "data", choices = experiments, selected = experiments[1])
   }, ignoreNULL = TRUE)
   
-  # Reactive expression to read the selected sheet
+  # Read the selected sheet
   sheet <- reactive({
     req(input$data)
     file_path <- selected_file()
     req(file_path)
-    if (input$data %in% excel_sheets(file_path)) {
-      read_excel(file_path, sheet = input$data)
-    } else {
-      NULL
-    }
+    
+    read_excel(file_path, sheet = input$data)
   })
-  
   # Reactive expression to track the number of stimulations
   numberstim <- reactive({
     req(input$numberstim)
@@ -683,6 +689,19 @@ server <- function(input, output, session) {
     req(values$merged_data)
     values$merged_data
   })
+  
+  output$download_data <- downloadHandler(
+    filename = function() {
+      req(values$merged_data)
+      paste0("summary_mean_moving_speed_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      req(values$merged_data)
+      readr::write_csv(values$merged_data, file)
+    }
+  )
+  
+  
   
   # Plot full data graph when button is pressed:
   observeEvent(input$plotfull, {
