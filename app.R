@@ -990,7 +990,7 @@ server <- function(input, output, session) {
               data = ps,
               aes(x = stim_time, y = mean_peak),
               inherit.aes = FALSE,
-              size = 5
+              size = 3
             )
           
           # line + CI for fixed effect
@@ -1094,7 +1094,7 @@ server <- function(input, output, session) {
               data = ps,
               aes(x = stim_time, y = mean_peak),
               inherit.aes = FALSE,
-              size = 5
+              size = 3
             )
           
           # line + CI for fixed effect
