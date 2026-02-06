@@ -272,25 +272,42 @@ server <- function(input, output, session) {
   })
   
   # Update sheet choices when a new file is uploaded
-  observeEvent(selected_file(), {
-    file_path <- selected_file()
-    
-    # Optional: basic extension check
-    ext <- tolower(tools::file_ext(input$file$name))
-    validate(need(ext %in% c("xlsx", "xls"), "Please upload an .xlsx or .xls file."))
-    
-    experiments <- excel_sheets(file_path)
-    updateSelectInput(session, "data", choices = experiments, selected = experiments[1])
-  }, ignoreNULL = TRUE)
+  available_sheets <- reactiveVal(character(0))
   
-  # Read the selected sheet
-  sheet <- reactive({
-    req(input$data)
-    file_path <- selected_file()
-    req(file_path)
+  observeEvent(input$file, {
+    req(input$file$datapath)
     
-    read_excel(file_path, sheet = input$data)
+    shs <- readxl::excel_sheets(input$file$datapath)
+    available_sheets(shs)
+    
+    # Keep previous selection if still valid, otherwise fall back to first sheet
+    current <- isolate(input$sheet_name)  # change to your input id
+    new_sel <- if (!is.null(current) && current %in% shs) current else shs[[1]]
+    
+    updateSelectInput(
+      session,
+      inputId = "data",             # change to your input id
+      choices = shs,
+      selected = new_sel
+    )
+  }, ignoreInit = TRUE)
+  
+  
+  sheet <- reactive({
+    req(input$file$datapath)
+    
+    shs <- available_sheets()
+    req(length(shs) > 0)
+    
+    # Validate selection
+    if (is.null(input$sheet_name) || !(input$sheet_name %in% shs)) {
+      validate(need(FALSE, "Selected sheet not found in the uploaded file. Please choose a valid sheet."))
+    }
+    
+    readxl::read_excel(input$file$datapath, sheet = input$sheet_name)
   })
+  
+  
   # Reactive expression to track the number of stimulations
   numberstim <- reactive({
     req(input$numberstim)
