@@ -10,6 +10,69 @@
     "has_parameters": false
   },
   "packages": {
+    "MASS": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "MASS",
+        "Priority": "recommended",
+        "Version": "7.3-65",
+        "Date": "2025-02-19",
+        "Revision": "$Rev: 3681 $",
+        "Depends": "R (>= 4.4.0), grDevices, graphics, stats, utils",
+        "Imports": "methods",
+        "Suggests": "lattice, nlme, nnet, survival",
+        "Authors@R": "c(person(\"Brian\", \"Ripley\", role = c(\"aut\", \"cre\", \"cph\"),\n                    email = \"Brian.Ripley@R-project.org\"),\n\t     person(\"Bill\", \"Venables\", role = c(\"aut\", \"cph\")),\n\t     person(c(\"Douglas\", \"M.\"), \"Bates\", role = \"ctb\"),\n\t     person(\"Kurt\", \"Hornik\", role = \"trl\",\n                     comment = \"partial port ca 1998\"),\n\t     person(\"Albrecht\", \"Gebhardt\", role = \"trl\",\n                     comment = \"partial port ca 1998\"),\n\t     person(\"David\", \"Firth\", role = \"ctb\",\n\t            comment = \"support functions for polr\"))",
+        "Description": "Functions and datasets to support Venables and Ripley,\n  \"Modern Applied Statistics with S\" (4th edition, 2002).",
+        "Title": "Support Functions and Datasets for Venables and Ripley's MASS",
+        "LazyData": "yes",
+        "ByteCompile": "yes",
+        "License": "GPL-2 | GPL-3",
+        "URL": "http://www.stats.ox.ac.uk/pub/MASS4/",
+        "Contact": "<MASS@stats.ox.ac.uk>",
+        "NeedsCompilation": "yes",
+        "Packaged": "2025-02-19 08:49:43 UTC; ripley",
+        "Author": "Brian Ripley [aut, cre, cph],\n  Bill Venables [aut, cph],\n  Douglas M. Bates [ctb],\n  Kurt Hornik [trl] (partial port ca 1998),\n  Albrecht Gebhardt [trl] (partial port ca 1998),\n  David Firth [ctb] (support functions for polr)",
+        "Maintainer": "Brian Ripley <Brian.Ripley@R-project.org>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-02-28 17:44:52 UTC",
+        "Built": "R 4.5.1; aarch64-apple-darwin20; 2025-06-14 01:29:47 UTC; unix"
+      }
+    },
+    "Matrix": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "Matrix",
+        "Version": "1.7-4",
+        "VersionNote": "do also bump src/version.h, inst/include/Matrix/version.h",
+        "Date": "2025-08-27",
+        "Priority": "recommended",
+        "Title": "Sparse and Dense Matrix Classes and Methods",
+        "Description": "A rich hierarchy of sparse and dense matrix classes,\n\tincluding general, symmetric, triangular, and diagonal matrices\n\twith numeric, logical, or pattern entries.  Efficient methods for\n\toperating on such matrices, often wrapping the 'BLAS', 'LAPACK',\n\tand 'SuiteSparse' libraries.",
+        "License": "GPL (>= 2) | file LICENCE",
+        "URL": "https://Matrix.R-forge.R-project.org",
+        "BugReports": "https://R-forge.R-project.org/tracker/?atid=294&group_id=61",
+        "Contact": "Matrix-authors@R-project.org",
+        "Authors@R": "\n\tc(person(\"Douglas\", \"Bates\", role = \"aut\",\n\t         comment = c(ORCID = \"0000-0001-8316-9503\")),\n\t  person(\"Martin\", \"Maechler\", role = c(\"aut\", \"cre\"),\n\t         email = \"mmaechler+Matrix@gmail.com\",\n\t         comment = c(ORCID = \"0000-0002-8685-9910\")),\n\t  person(\"Mikael\", \"Jagan\", role = \"aut\",\n\t         comment = c(ORCID = \"0000-0002-3542-2938\")),\n\t  person(\"Timothy A.\", \"Davis\", role = \"ctb\",\n\t         comment = c(ORCID = \"0000-0001-7614-6899\",\n\t                     \"SuiteSparse libraries\",\n\t                     \"collaborators listed in dir(system.file(\\\"doc\\\", \\\"SuiteSparse\\\", package=\\\"Matrix\\\"), pattern=\\\"License\\\", full.names=TRUE, recursive=TRUE)\")),\n\t  person(\"George\", \"Karypis\", role = \"ctb\",\n\t         comment = c(ORCID = \"0000-0003-2753-1437\",\n\t                     \"METIS library\",\n\t                     \"Copyright: Regents of the University of Minnesota\")),\n\t  person(\"Jason\", \"Riedy\", role = \"ctb\",\n\t         comment = c(ORCID = \"0000-0002-4345-4200\",\n\t                     \"GNU Octave's condest() and onenormest()\",\n\t                     \"Copyright: Regents of the University of California\")),\n\t  person(\"Jens\", \"Oehlschlägel\", role = \"ctb\",\n\t         comment = \"initial nearPD()\"),\n\t  person(\"R Core Team\", role = \"ctb\",\n\t         comment = c(ROR = \"02zz1nj61\", \"base R's matrix implementation\")))",
+        "Depends": "R (>= 4.4), methods",
+        "Imports": "grDevices, graphics, grid, lattice, stats, utils",
+        "Suggests": "MASS, datasets, sfsmisc, tools",
+        "Enhances": "SparseM, graph",
+        "LazyData": "no",
+        "LazyDataNote": "not possible, since we use data/*.R and our S4 classes",
+        "BuildResaveData": "no",
+        "Encoding": "UTF-8",
+        "NeedsCompilation": "yes",
+        "Packaged": "2025-08-27 10:17:11 UTC; maechler",
+        "Author": "Douglas Bates [aut] (ORCID: <https://orcid.org/0000-0001-8316-9503>),\n  Martin Maechler [aut, cre] (ORCID:\n    <https://orcid.org/0000-0002-8685-9910>),\n  Mikael Jagan [aut] (ORCID: <https://orcid.org/0000-0002-3542-2938>),\n  Timothy A. Davis [ctb] (ORCID: <https://orcid.org/0000-0001-7614-6899>,\n    SuiteSparse libraries, collaborators listed in\n    dir(system.file(\"doc\", \"SuiteSparse\", package=\"Matrix\"),\n    pattern=\"License\", full.names=TRUE, recursive=TRUE)),\n  George Karypis [ctb] (ORCID: <https://orcid.org/0000-0003-2753-1437>,\n    METIS library, Copyright: Regents of the University of Minnesota),\n  Jason Riedy [ctb] (ORCID: <https://orcid.org/0000-0002-4345-4200>, GNU\n    Octave's condest() and onenormest(), Copyright: Regents of the\n    University of California),\n  Jens Oehlschlägel [ctb] (initial nearPD()),\n  R Core Team [ctb] (ROR: <https://ror.org/02zz1nj61>, base R's matrix\n    implementation)",
+        "Maintainer": "Martin Maechler <mmaechler+Matrix@gmail.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-08-28 11:50:02 UTC",
+        "Built": "R 4.5.0; aarch64-apple-darwin20; 2025-09-01 01:42:25 UTC; unix",
+        "Archs": "Matrix.so.dSYM"
+      }
+    },
     "R6": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -90,6 +153,63 @@
         "RemoteRef": "Rcpp",
         "RemoteRepos": "https://cran.rstudio.com",
         "RemoteSha": "1.1.0"
+      }
+    },
+    "RcppEigen": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "RcppEigen",
+        "Type": "Package",
+        "Title": "'Rcpp' Integration for the 'Eigen' Templated Linear Algebra\nLibrary",
+        "Version": "0.3.4.0.2",
+        "Date": "2024-08-23",
+        "Authors@R": "c(person(\"Doug\", \"Bates\", role = \"aut\",\n                    comment = c(ORCID = \"0000-0001-8316-9503\")),\n             person(\"Dirk\", \"Eddelbuettel\", role = c(\"aut\", \"cre\"), email = \"edd@debian.org\",\n                    comment = c(ORCID = \"0000-0001-6419-907X\")),\n             person(\"Romain\", \"Francois\", role = \"aut\",\n                    comment = c(ORCID = \"0000-0002-2444-4226\")),\n             person(\"Yixuan\", \"Qiu\", role = \"aut\",\n                    comment = c(ORCID = \"0000-0003-0109-6692\")),\n             person(\"Authors of\", \"Eigen\", role = \"cph\",\n                    comment = \"Authorship and copyright in included Eigen library as detailed in inst/COPYRIGHTS\"))",
+        "Copyright": "See the file COPYRIGHTS for various Eigen copyright details",
+        "Description": "R and 'Eigen' integration using 'Rcpp'.\n 'Eigen' is a C++ template library for linear algebra: matrices, vectors,\n numerical solvers and related algorithms.  It supports dense and sparse\n matrices on integer, floating point and complex numbers, decompositions of\n such matrices, and solutions of linear systems. Its performance on many\n algorithms is comparable with some of the best implementations based on\n 'Lapack' and level-3 'BLAS'. The 'RcppEigen' package includes the header\n files from the 'Eigen' C++ template library. Thus users do not need to\n install 'Eigen' itself in order to use 'RcppEigen'. Since version 3.1.1,\n 'Eigen' is licensed under the Mozilla Public License (version 2); earlier\n version were licensed under the GNU LGPL version 3 or later. 'RcppEigen'\n (the 'Rcpp' bindings/bridge to 'Eigen') is licensed under the GNU GPL\n version 2 or later, as is the rest of 'Rcpp'.",
+        "License": "GPL (>= 2) | file LICENSE",
+        "LazyLoad": "yes",
+        "Depends": "R (>= 3.6.0)",
+        "LinkingTo": "Rcpp",
+        "Imports": "Rcpp (>= 0.11.0), stats, utils",
+        "Suggests": "Matrix, inline, tinytest, pkgKitten, microbenchmark",
+        "URL": "https://github.com/RcppCore/RcppEigen,\nhttps://dirk.eddelbuettel.com/code/rcpp.eigen.html",
+        "BugReports": "https://github.com/RcppCore/RcppEigen/issues",
+        "NeedsCompilation": "yes",
+        "Packaged": "2024-08-23 18:11:22 UTC; edd",
+        "Author": "Doug Bates [aut] (<https://orcid.org/0000-0001-8316-9503>),\n  Dirk Eddelbuettel [aut, cre] (<https://orcid.org/0000-0001-6419-907X>),\n  Romain Francois [aut] (<https://orcid.org/0000-0002-2444-4226>),\n  Yixuan Qiu [aut] (<https://orcid.org/0000-0003-0109-6692>),\n  Authors of Eigen [cph] (Authorship and copyright in included Eigen\n    library as detailed in inst/COPYRIGHTS)",
+        "Maintainer": "Dirk Eddelbuettel <edd@debian.org>",
+        "Repository": "CRAN",
+        "Date/Publication": "2024-08-24 06:30:02 UTC",
+        "Built": "R 4.5.0; aarch64-apple-darwin20; 2025-03-31 21:46:11 UTC; unix",
+        "Archs": "RcppEigen.so.dSYM"
+      }
+    },
+    "Rdpack": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "Rdpack",
+        "Type": "Package",
+        "Title": "Update and Manipulate Rd Documentation Objects",
+        "Version": "2.6.4",
+        "Authors@R": "c( person(given = c(\"Georgi\", \"N.\"),\n                     family = \"Boshnakov\", \n                     role = c(\"aut\", \"cre\"), \n                     email = \"georgi.boshnakov@manchester.ac.uk\",\n\t\t     comment = c(ORCID = \"0000-0003-2839-346X\")),\n\t      person(given = \"Duncan\", \n\t             family = \"Murdoch\", \n\t             role = \"ctb\", email = \"murdoch.duncan@gmail.com\") )",
+        "Description": "Functions for manipulation of R documentation objects,\n    including functions reprompt() and ereprompt() for updating 'Rd'\n    documentation for functions, methods and classes; 'Rd' macros for\n    citations and import of references from 'bibtex' files for use in\n    'Rd' files and 'roxygen2' comments; 'Rd' macros for evaluating and\n    inserting snippets of 'R' code and the results of its evaluation or\n    creating graphics on the fly; and many functions for manipulation of\n    references and Rd files.",
+        "URL": "https://geobosh.github.io/Rdpack/ (doc),\nhttps://github.com/GeoBosh/Rdpack (devel)",
+        "BugReports": "https://github.com/GeoBosh/Rdpack/issues",
+        "Depends": "R (>= 2.15.0), methods",
+        "Imports": "tools, utils, rbibutils (>= 1.3)",
+        "Suggests": "grDevices, testthat, rstudioapi, rprojroot, gbRd",
+        "License": "GPL (>= 2)",
+        "LazyLoad": "yes",
+        "RoxygenNote": "7.1.1",
+        "NeedsCompilation": "no",
+        "Packaged": "2025-04-08 20:11:29 UTC; georgi",
+        "Author": "Georgi N. Boshnakov [aut, cre]\n    (<https://orcid.org/0000-0003-2839-346X>),\n  Duncan Murdoch [ctb]",
+        "Maintainer": "Georgi N. Boshnakov <georgi.boshnakov@manchester.ac.uk>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-04-09 01:10:01 UTC",
+        "Built": "R 4.5.0; ; 2025-04-09 01:15:32 UTC; unix"
       }
     },
     "S7": {
@@ -202,6 +322,32 @@
         "Repository": "RSPM",
         "Date/Publication": "2025-01-16 16:00:07 UTC",
         "Built": "R 4.5.0; x86_64-pc-linux-gnu; 2025-04-06 04:41:33 UTC; unix"
+      }
+    },
+    "boot": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "boot",
+        "Priority": "recommended",
+        "Version": "1.3-32",
+        "Date": "2025-08-29",
+        "Authors@R": "c(person(\"Angelo\", \"Canty\", role = \"aut\",\n\t             email = \"cantya@mcmaster.ca\", \n                     comment = \"author of original code for S\"),\n             person(\"Brian\", \"Ripley\", role = c(\"aut\", \"trl\"),\n                    email = \"Brian.Ripley@R-project.org\",\n\t\t    comment = \"conversion to R, maintainer 1999--2022, author of parallel support\"),\n             person(\"Alessandra R.\", \"Brazzale\", role = c(\"ctb\", \"cre\"),\n                    email = \"brazzale@stat.unipd.it\",\n\t\t    comment = \"minor bug fixes\"))",
+        "Maintainer": "Alessandra R. Brazzale <brazzale@stat.unipd.it>",
+        "Note": "Maintainers are not available to give advice on using a package\nthey did not author.",
+        "Description": "Functions and datasets for bootstrapping from the\n  book \"Bootstrap Methods and Their Application\" by A. C. Davison and \n  D. V. Hinkley (1997, CUP), originally written by Angelo Canty for S.",
+        "Title": "Bootstrap Functions",
+        "Depends": "R (>= 3.0.0), graphics, stats",
+        "Suggests": "MASS, survival",
+        "LazyData": "yes",
+        "ByteCompile": "yes",
+        "License": "Unlimited",
+        "NeedsCompilation": "no",
+        "Packaged": "2025-08-29 10:01:31 UTC; brazzale",
+        "Author": "Angelo Canty [aut] (author of original code for S),\n  Brian Ripley [aut, trl] (conversion to R, maintainer 1999--2022, author\n    of parallel support),\n  Alessandra R. Brazzale [ctb, cre] (minor bug fixes)",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-08-29 13:00:08 UTC",
+        "Built": "R 4.5.0; ; 2025-09-01 01:31:14 UTC; unix"
       }
     },
     "bslib": {
@@ -1176,6 +1322,35 @@
         "RemoteSha": "1.4.4"
       }
     },
+    "lattice": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "lattice",
+        "Version": "0.22-7",
+        "Date": "2025-03-31",
+        "Priority": "recommended",
+        "Title": "Trellis Graphics for R",
+        "Authors@R": "c(person(\"Deepayan\", \"Sarkar\", role = c(\"aut\", \"cre\"),\n\t            email = \"deepayan.sarkar@r-project.org\",\n\t\t    comment = c(ORCID = \"0000-0003-4107-1553\")),\n              person(\"Felix\", \"Andrews\", role = \"ctb\"),\n\t      person(\"Kevin\", \"Wright\", role = \"ctb\", comment = \"documentation\"),\n\t      person(\"Neil\", \"Klepeis\", role = \"ctb\"),\n\t      person(\"Johan\", \"Larsson\", role = \"ctb\", comment = \"miscellaneous improvements\"),\n              person(\"Zhijian (Jason)\", \"Wen\", role = \"cph\", comment = \"filled contour code\"),\n              person(\"Paul\", \"Murrell\", role = \"ctb\", email = \"paul@stat.auckland.ac.nz\"),\n\t      person(\"Stefan\", \"Eng\", role = \"ctb\", comment = \"violin plot improvements\"),\n\t      person(\"Achim\", \"Zeileis\", role = \"ctb\", comment = \"modern colors\"),\n              person(\"Alexandre\", \"Courtiol\", role = \"ctb\", comment = \"generics for larrows, lpolygon, lrect and lsegments\")\n\t      )",
+        "Description": "A powerful and elegant high-level data visualization\n  system inspired by Trellis graphics, with an emphasis on\n  multivariate data. Lattice is sufficient for typical graphics needs,\n  and is also flexible enough to handle most nonstandard requirements.\n  See ?Lattice for an introduction.",
+        "Depends": "R (>= 4.0.0)",
+        "Suggests": "KernSmooth, MASS, latticeExtra, colorspace",
+        "Imports": "grid, grDevices, graphics, stats, utils",
+        "Enhances": "chron, zoo",
+        "LazyLoad": "yes",
+        "LazyData": "yes",
+        "License": "GPL (>= 2)",
+        "URL": "https://lattice.r-forge.r-project.org/",
+        "BugReports": "https://github.com/deepayan/lattice/issues",
+        "NeedsCompilation": "yes",
+        "Packaged": "2025-04-02 04:55:57 UTC; deepayan",
+        "Author": "Deepayan Sarkar [aut, cre] (<https://orcid.org/0000-0003-4107-1553>),\n  Felix Andrews [ctb],\n  Kevin Wright [ctb] (documentation),\n  Neil Klepeis [ctb],\n  Johan Larsson [ctb] (miscellaneous improvements),\n  Zhijian (Jason) Wen [cph] (filled contour code),\n  Paul Murrell [ctb],\n  Stefan Eng [ctb] (violin plot improvements),\n  Achim Zeileis [ctb] (modern colors),\n  Alexandre Courtiol [ctb] (generics for larrows, lpolygon, lrect and\n    lsegments)",
+        "Maintainer": "Deepayan Sarkar <deepayan.sarkar@r-project.org>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-04-02 15:40:02 UTC",
+        "Built": "R 4.5.1; aarch64-apple-darwin20; 2025-06-14 01:29:47 UTC; unix"
+      }
+    },
     "lifecycle": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -1236,6 +1411,69 @@
         "RemoteRef": "litedown",
         "RemoteRepos": "https://cran.rstudio.com",
         "RemoteSha": "0.8"
+      }
+    },
+    "lme4": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "lme4",
+        "Version": "1.1-37",
+        "Title": "Linear Mixed-Effects Models using 'Eigen' and S4",
+        "Authors@R": "c(\n    person(\"Douglas\",\"Bates\", role=\"aut\",\n\tcomment=c(ORCID=\"0000-0001-8316-9503\")),\n    person(\"Martin\",\"Maechler\", role=\"aut\",\n\tcomment=c(ORCID=\"0000-0002-8685-9910\")),\n    person(\"Ben\",\"Bolker\",email=\"bbolker+lme4@gmail.com\", role=c(\"aut\",\"cre\"),\n\tcomment=c(ORCID=\"0000-0002-2127-0443\")),\n    person(\"Steven\",\"Walker\",role=\"aut\",\n\tcomment=c(ORCID=\"0000-0002-4394-9078\")),\n    person(\"Rune Haubo Bojesen\",\"Christensen\", role=\"ctb\",\n\tcomment=c(ORCID=\"0000-0002-4494-3399\")),\n    person(\"Henrik\",\"Singmann\", role=\"ctb\",\n\tcomment=c(ORCID=\"0000-0002-4842-3657\")),\n    person(\"Bin\", \"Dai\", role=\"ctb\"),\n    person(\"Fabian\", \"Scheipl\", role=\"ctb\",\n\tcomment=c(ORCID=\"0000-0001-8172-3603\")),\n    person(\"Gabor\", \"Grothendieck\", role=\"ctb\"),\n    person(\"Peter\", \"Green\", role=\"ctb\",\n\tcomment=c(ORCID=\"0000-0002-0238-9852\")),\n    person(\"John\", \"Fox\", role=\"ctb\"),\n    person(\"Alexander\", \"Bauer\", role=\"ctb\"),\n    person(\"Pavel N.\", \"Krivitsky\", role=c(\"ctb\",\"cph\"), comment=c(ORCID=\"0000-0002-9101-3362\",\n    \"shared copyright on simulate.formula\")),\n    person(\"Emi\", \"Tanaka\", role = \"ctb\",\n      comment = c(ORCID=\"0000-0002-1455-259X\")),\n      person(\"Mikael\", \"Jagan\", role = \"ctb\",\n      comment = c(ORCID=\"0000-0002-3542-2938\")),\n    person(\"Ross D.\", \"Boylan\", email=\"ross.boylan@ucsf.edu\", role=(\"ctb\"),\n        comment = c(ORCID=\"0009-0003-4123-8090\"))\n      )",
+        "Description": "Fit linear and generalized linear mixed-effects models.\n    The models and their components are represented using S4 classes and\n    methods.  The core computational algorithms are implemented using the\n    'Eigen' C++ library for numerical linear algebra and 'RcppEigen' \"glue\".",
+        "Depends": "R (>= 3.6.0), Matrix, methods, stats",
+        "LinkingTo": "Rcpp (>= 0.10.5), RcppEigen (>= 0.3.3.9.4), Matrix (>=\n1.2-3)",
+        "Imports": "graphics, grid, splines, utils, parallel, MASS, lattice, boot,\nnlme (>= 3.1-123), minqa (>= 1.1.15), nloptr (>= 1.0.4),\nreformulas (>= 0.3.0)",
+        "Suggests": "knitr, rmarkdown, MEMSS, testthat (>= 0.8.1), ggplot2,\nmlmRev, optimx (>= 2013.8.6), gamm4, pbkrtest, HSAUR3,\nnumDeriv, car, dfoptim, mgcv, statmod, rr2, semEff, tibble,\nmerDeriv",
+        "VignetteBuilder": "knitr",
+        "LazyData": "yes",
+        "License": "GPL (>= 2)",
+        "URL": "https://github.com/lme4/lme4/",
+        "BugReports": "https://github.com/lme4/lme4/issues",
+        "Encoding": "UTF-8",
+        "NeedsCompilation": "yes",
+        "Packaged": "2025-03-25 00:19:18 UTC; bolker",
+        "Author": "Douglas Bates [aut] (<https://orcid.org/0000-0001-8316-9503>),\n  Martin Maechler [aut] (<https://orcid.org/0000-0002-8685-9910>),\n  Ben Bolker [aut, cre] (<https://orcid.org/0000-0002-2127-0443>),\n  Steven Walker [aut] (<https://orcid.org/0000-0002-4394-9078>),\n  Rune Haubo Bojesen Christensen [ctb]\n    (<https://orcid.org/0000-0002-4494-3399>),\n  Henrik Singmann [ctb] (<https://orcid.org/0000-0002-4842-3657>),\n  Bin Dai [ctb],\n  Fabian Scheipl [ctb] (<https://orcid.org/0000-0001-8172-3603>),\n  Gabor Grothendieck [ctb],\n  Peter Green [ctb] (<https://orcid.org/0000-0002-0238-9852>),\n  John Fox [ctb],\n  Alexander Bauer [ctb],\n  Pavel N. Krivitsky [ctb, cph] (<https://orcid.org/0000-0002-9101-3362>,\n    shared copyright on simulate.formula),\n  Emi Tanaka [ctb] (<https://orcid.org/0000-0002-1455-259X>),\n  Mikael Jagan [ctb] (<https://orcid.org/0000-0002-3542-2938>),\n  Ross D. Boylan [ctb] (<https://orcid.org/0009-0003-4123-8090>)",
+        "Maintainer": "Ben Bolker <bbolker+lme4@gmail.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-03-26 05:40:02 UTC",
+        "Built": "R 4.5.0; aarch64-apple-darwin20; 2025-04-01 16:00:10 UTC; unix",
+        "Archs": "lme4.so.dSYM"
+      }
+    },
+    "lmerTest": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "lmerTest",
+        "Type": "Package",
+        "Title": "Tests in Linear Mixed Effects Models",
+        "Version": "3.1-3",
+        "Authors@R": "c(person(\"Alexandra\", \"Kuznetsova\", role = c(\"aut\")),\n                   person(\"Per\", \"Bruun Brockhoff\", role = c(\"aut\", \"ths\"),\n                   email = \"perbb@dtu.dk\"),\n                   person(\"Rune\", \"Haubo Bojesen Christensen\", role =  c(\"aut\", \"cre\"),\n\t\t   email = \"Rune.Haubo@gmail.com\"),\n\t\t   person(\"Sofie\", \"Pødenphant Jensen\", role=c(\"ctb\"), email=\"sofp@dtu.dk\"))",
+        "Depends": "R (>= 3.2.5), lme4 (>= 1.1-10), stats, methods",
+        "Imports": "numDeriv, MASS, ggplot2",
+        "Suggests": "pbkrtest (>= 0.4-3), tools",
+        "Description": "Provides p-values in type I, II or III anova and summary tables\n    for lmer model fits (cf. lme4) via Satterthwaite's degrees of freedom method. A\n    Kenward-Roger method is also available via the pbkrtest package. Model selection\n    methods include step, drop1 and anova-like tables for random effects (ranova).\n    Methods for Least-Square means (LS-means) and tests of linear contrasts of fixed\n    effects are also available.",
+        "License": "GPL (>= 2)",
+        "Encoding": "UTF-8",
+        "LazyData": "true",
+        "URL": "https://github.com/runehaubo/lmerTestR",
+        "BugReports": "https://github.com/runehaubo/lmerTestR/issues",
+        "RoxygenNote": "7.1.1",
+        "Collate": "'anova_contrasts.R' 'contest.R' 'contrast_utils.R'\n'data_documentation.R' 'drop1.R' 'estimability.R' 'legacy.R'\n'lmer.R' 'lmerTest.R' 'lmer_anova.R' 'lmer_summary.R'\n'ls_means.R' 'ranova.R' 'step.R' 'terms_utils.R' 'utils.R'",
+        "NeedsCompilation": "no",
+        "Packaged": "2020-10-23 07:00:33 UTC; rhbc",
+        "Author": "Alexandra Kuznetsova [aut],\n  Per Bruun Brockhoff [aut, ths],\n  Rune Haubo Bojesen Christensen [aut, cre],\n  Sofie Pødenphant Jensen [ctb]",
+        "Maintainer": "Rune Haubo Bojesen Christensen <Rune.Haubo@gmail.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2020-10-23 11:10:04 UTC",
+        "Built": "R 4.5.0; ; 2025-04-01 23:41:07 UTC; unix",
+        "RemoteType": "standard",
+        "RemotePkgRef": "lmerTest",
+        "RemoteRef": "lmerTest",
+        "RemoteRepos": "https://cran.rstudio.com",
+        "RemoteSha": "3.1-3"
       }
     },
     "magrittr": {
@@ -1344,6 +1582,31 @@
         "Built": "R 4.5.0; x86_64-pc-linux-gnu; 2025-04-06 04:42:22 UTC; unix"
       }
     },
+    "minqa": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "minqa",
+        "Type": "Package",
+        "Title": "Derivative-Free Optimization Algorithms by Quadratic\nApproximation",
+        "Version": "1.2.8",
+        "Authors@R": "c(person(given = \"Douglas\",\n                      family = \"Bates\",\n                      role = \"aut\"),\n               person(given = c(\"Katharine\", \"M.\"),\n                      family = \"Mullen\",\n                      role = c(\"aut\", \"cre\"),\n                      email = \"katharine.mullen@stat.ucla.edu\"),\n               person(given = c(\"John\", \"C.\"),\n                      family = \"Nash\",\n                      role = \"aut\"),\n               person(given = \"Ravi\",\n                      family = \"Varadhan\",\n                      role = \"aut\"))",
+        "Maintainer": "Katharine M. Mullen <katharine.mullen@stat.ucla.edu>",
+        "Description": "Derivative-free optimization by quadratic approximation\n        based on an interface to Fortran implementations by M. J. D.\n        Powell.",
+        "License": "GPL-2",
+        "URL": "http://optimizer.r-forge.r-project.org",
+        "Imports": "Rcpp (>= 0.9.10)",
+        "LinkingTo": "Rcpp",
+        "SystemRequirements": "GNU make",
+        "NeedsCompilation": "yes",
+        "Packaged": "2024-08-17 20:29:16 UTC; kmm",
+        "Repository": "CRAN",
+        "Date/Publication": "2024-08-17 21:50:06 UTC",
+        "Author": "Douglas Bates [aut],\n  Katharine M. Mullen [aut, cre],\n  John C. Nash [aut],\n  Ravi Varadhan [aut]",
+        "Built": "R 4.5.0; aarch64-apple-darwin20; 2025-03-31 21:52:42 UTC; unix",
+        "Archs": "minqa.so.dSYM"
+      }
+    },
     "mvtnorm": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -1367,6 +1630,65 @@
         "Date/Publication": "2025-01-10 16:20:10 UTC",
         "Built": "R 4.5.0; aarch64-apple-darwin20; 2025-03-31 21:50:03 UTC; unix",
         "Archs": "mvtnorm.so.dSYM"
+      }
+    },
+    "nlme": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "nlme",
+        "Version": "3.1-168",
+        "Date": "2025-03-31",
+        "Priority": "recommended",
+        "Title": "Linear and Nonlinear Mixed Effects Models",
+        "Authors@R": "c(person(\"José\", \"Pinheiro\", role = \"aut\", comment = \"S version\"),\n             person(\"Douglas\", \"Bates\", role = \"aut\", comment = \"up to 2007\"),\n             person(\"Saikat\", \"DebRoy\", role = \"ctb\", comment = \"up to 2002\"),\n             person(\"Deepayan\", \"Sarkar\", role = \"ctb\", comment = \"up to 2005\"),\n             person(\"EISPACK authors\", role = \"ctb\", comment = \"src/rs.f\"),\n\t     person(\"Siem\", \"Heisterkamp\", role = \"ctb\", comment = \"Author fixed sigma\"),\n             person(\"Bert\", \"Van Willigen\",role = \"ctb\", comment = \"Programmer fixed sigma\"),\n             person(\"Johannes\", \"Ranke\", role = \"ctb\", comment = \"varConstProp()\"),\n\t     person(\"R Core Team\", email = \"R-core@R-project.org\",\n                    role = c(\"aut\", \"cre\"), comment = c(ROR = \"02zz1nj61\")))",
+        "Contact": "see 'MailingList'",
+        "Description": "Fit and compare Gaussian linear and nonlinear mixed-effects models.",
+        "Depends": "R (>= 3.6.0)",
+        "Imports": "graphics, stats, utils, lattice",
+        "Suggests": "MASS, SASmixed",
+        "LazyData": "yes",
+        "Encoding": "UTF-8",
+        "License": "GPL (>= 2)",
+        "BugReports": "https://bugs.r-project.org",
+        "MailingList": "R-help@r-project.org",
+        "URL": "https://svn.r-project.org/R-packages/trunk/nlme/",
+        "NeedsCompilation": "yes",
+        "Packaged": "2025-03-31 11:19:09 UTC; ripley",
+        "Author": "José Pinheiro [aut] (S version),\n  Douglas Bates [aut] (up to 2007),\n  Saikat DebRoy [ctb] (up to 2002),\n  Deepayan Sarkar [ctb] (up to 2005),\n  EISPACK authors [ctb] (src/rs.f),\n  Siem Heisterkamp [ctb] (Author fixed sigma),\n  Bert Van Willigen [ctb] (Programmer fixed sigma),\n  Johannes Ranke [ctb] (varConstProp()),\n  R Core Team [aut, cre] (02zz1nj61)",
+        "Maintainer": "R Core Team <R-core@R-project.org>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-03-31 11:21:01 UTC",
+        "Built": "R 4.5.1; aarch64-apple-darwin20; 2025-06-14 01:29:51 UTC; unix"
+      }
+    },
+    "nloptr": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "nloptr",
+        "Type": "Package",
+        "Title": "R Interface to NLopt",
+        "Version": "2.2.1",
+        "Authors@R": "c(person(\"Jelmer\", \"Ypma\", role = \"aut\",\n                    email = \"uctpjyy@ucl.ac.uk\"),\n             person(c(\"Steven\", \"G.\"), \"Johnson\", role = \"aut\",\n                    comment = \"author of the NLopt C library\"),\n             person(\"Aymeric\", \"Stamm\", role = c(\"ctb\", \"cre\"),\n                    email = \"aymeric.stamm@cnrs.fr\",\n                    comment = c(ORCID = \"0000-0002-8725-3654\")),\n             person(c(\"Hans\", \"W.\"), \"Borchers\", role = \"ctb\",\n                    email = \"hwborchers@googlemail.com\"),\n             person(\"Dirk\", \"Eddelbuettel\", role = \"ctb\",\n                    email = \"edd@debian.org\"),\n             person(\"Brian\", \"Ripley\", role = \"ctb\",\n                    comment = \"build process on multiple OS\"),\n             person(\"Kurt\", \"Hornik\", role = \"ctb\",\n                    comment = \"build process on multiple OS\"),\n             person(\"Julien\", \"Chiquet\", role = \"ctb\"),\n             person(\"Avraham\", \"Adler\", role = \"ctb\", \n                    email = \"Avraham.Adler@gmail.com\",\n                    comment = c(ORCID = \"0000-0002-3039-0703\")),\n             person(\"Xiongtao\", \"Dai\", role = \"ctb\"),\n             person(\"Jeroen\", \"Ooms\", role = \"ctb\",\n                    email = \"jeroen@berkeley.edu\"),\n             person(\"Tomas\", \"Kalibera\", role = \"ctb\"),\n             person(\"Mikael\", \"Jagan\", role = \"ctb\"))",
+        "Description": "\n    Solve optimization problems using an R interface to NLopt. NLopt is a \n    free/open-source library for nonlinear optimization, providing a common\n    interface for a number of different free optimization routines available\n    online as well as original implementations of various other algorithms.\n    See <https://nlopt.readthedocs.io/en/latest/NLopt_Algorithms/> for more\n    information on the available algorithms. Building from included sources \n    requires 'CMake'. On Linux and 'macOS', if a suitable system build of \n    NLopt (2.7.0 or later) is found, it is used; otherwise, it is built \n    from included sources via 'CMake'. On Windows, NLopt is obtained through \n    'rwinlib' for 'R <= 4.1.x' or grabbed from the appropriate toolchain for\n    'R >= 4.2.0'.",
+        "License": "LGPL (>= 3)",
+        "SystemRequirements": "cmake (>= 3.2.0) which is used only on Linux or\nmacOS systems when no system build of nlopt (>= 2.7.0) can be\nfound.",
+        "Encoding": "UTF-8",
+        "RoxygenNote": "7.3.2",
+        "Suggests": "knitr, rmarkdown, covr, tinytest",
+        "VignetteBuilder": "knitr",
+        "URL": "https://github.com/astamm/nloptr, https://astamm.github.io/nloptr/",
+        "BugReports": "https://github.com/astamm/nloptr/issues",
+        "NeedsCompilation": "yes",
+        "UseLTO": "yes",
+        "Packaged": "2025-03-16 10:28:42 UTC; stamm-a",
+        "Author": "Jelmer Ypma [aut],\n  Steven G. Johnson [aut] (author of the NLopt C library),\n  Aymeric Stamm [ctb, cre] (<https://orcid.org/0000-0002-8725-3654>),\n  Hans W. Borchers [ctb],\n  Dirk Eddelbuettel [ctb],\n  Brian Ripley [ctb] (build process on multiple OS),\n  Kurt Hornik [ctb] (build process on multiple OS),\n  Julien Chiquet [ctb],\n  Avraham Adler [ctb] (<https://orcid.org/0000-0002-3039-0703>),\n  Xiongtao Dai [ctb],\n  Jeroen Ooms [ctb],\n  Tomas Kalibera [ctb],\n  Mikael Jagan [ctb]",
+        "Maintainer": "Aymeric Stamm <aymeric.stamm@cnrs.fr>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-03-17 01:40:02 UTC",
+        "Built": "R 4.5.0; aarch64-apple-darwin20; 2025-03-31 21:53:16 UTC; unix",
+        "Archs": "nloptr.so.dSYM"
       }
     },
     "numDeriv": {
@@ -1661,6 +1983,39 @@
         "Built": "R 4.5.0; x86_64-pc-linux-gnu; 2025-04-06 04:41:42 UTC; unix"
       }
     },
+    "rbibutils": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "rbibutils",
+        "Type": "Package",
+        "Title": "Read 'Bibtex' Files and Convert Between Bibliography Formats",
+        "Version": "2.4",
+        "Authors@R": "c( person(given = c(\"Georgi\", \"N.\"), family = \"Boshnakov\", \n                     role = c(\"aut\", \"cre\"), \t\n                     email = \"georgi.boshnakov@manchester.ac.uk\",\n\t\t     comment = c(\"R port, R code, new C code and modifications to bibutils' C code, conversion to Bibentry (R and C code)\",\n\t\t     comment = c(ORCID = \"0000-0003-2839-346X\")) ),\n              person(given = \"Chris\", family = \"Putman\",\n                     role = \"aut\",\n\t\t     comment = \"src/*, author of the bibutils libraries, https://sourceforge.net/projects/bibutils/\"),\n              person(given = \"Richard\", family = \"Mathar\",\n                     role = \"ctb\",\n\t\t     comment = \"src/addsout.c\"),\n              person(given = \"Johannes\", family = \"Wilm\",\n                     role = \"ctb\",\n\t\t     comment = \"src/biblatexin.c, src/bltypes.c\"),\n\t      person(\"R Core Team\", role = \"ctb\",\n\t             comment = \"base R's bibentry and bibstyle implementation\")\n            )",
+        "Description": "Read and write 'Bibtex' files. Convert between bibliography\n    formats, including 'Bibtex', 'Biblatex', 'PubMed', 'Endnote', and\n    'Bibentry'.  Includes a port of the 'bibutils' utilities by Chris\n    Putnam <https://sourceforge.net/projects/bibutils/>. Supports all\n    bibliography formats and character encodings implemented in\n    'bibutils'.",
+        "License": "GPL-2",
+        "URL": "https://geobosh.github.io/rbibutils/ (doc),\nhttps://github.com/GeoBosh/rbibutils (devel)",
+        "BugReports": "https://github.com/GeoBosh/rbibutils/issues",
+        "Depends": "R (>= 2.10)",
+        "Imports": "utils, tools",
+        "Suggests": "testthat",
+        "Encoding": "UTF-8",
+        "NeedsCompilation": "yes",
+        "Config/Needs/memcheck": "devtools, rcmdcheck",
+        "Packaged": "2025-11-07 14:55:01 UTC; georgi",
+        "Author": "Georgi N. Boshnakov [aut, cre] (R port, R code, new C code and\n    modifications to bibutils' C code, conversion to Bibentry (R and C\n    code), comment.ORCID: 0000-0003-2839-346X),\n  Chris Putman [aut] (src/*, author of the bibutils libraries,\n    https://sourceforge.net/projects/bibutils/),\n  Richard Mathar [ctb] (src/addsout.c),\n  Johannes Wilm [ctb] (src/biblatexin.c, src/bltypes.c),\n  R Core Team [ctb] (base R's bibentry and bibstyle implementation)",
+        "Maintainer": "Georgi N. Boshnakov <georgi.boshnakov@manchester.ac.uk>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-11-07 16:20:02 UTC",
+        "Built": "R 4.5.0; aarch64-apple-darwin20; 2025-11-07 19:16:41 UTC; unix",
+        "Archs": "rbibutils.so.dSYM",
+        "RemoteType": "standard",
+        "RemotePkgRef": "rbibutils",
+        "RemoteRef": "rbibutils",
+        "RemoteRepos": "https://cran.rstudio.com",
+        "RemoteSha": "2.4"
+      }
+    },
     "readr": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -1723,6 +2078,36 @@
         "Repository": "RSPM",
         "Date/Publication": "2025-03-07 17:10:02 UTC",
         "Built": "R 4.5.0; x86_64-pc-linux-gnu; 2025-04-06 04:44:58 UTC; unix"
+      }
+    },
+    "reformulas": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "reformulas",
+        "Title": "Machinery for Processing Random Effect Formulas",
+        "Version": "0.4.2",
+        "Authors@R": "\n    person(given = \"Ben\",\n           family = \"Bolker\",\n           role = c(\"aut\", \"cre\"),\n           email = \"bolker@mcmaster.ca\",\n\t   \t           comment=c(ORCID=\"0000-0002-2127-0443\"))",
+        "Description": "Takes formulas including random-effects components (formatted as in 'lme4', 'glmmTMB', etc.) and processes them. Includes various helper functions.",
+        "URL": "https://github.com/bbolker/reformulas",
+        "License": "GPL-3",
+        "Encoding": "UTF-8",
+        "Imports": "stats, methods, Matrix, Rdpack",
+        "RdMacros": "Rdpack",
+        "Suggests": "lme4, tinytest, glmmTMB",
+        "RoxygenNote": "7.3.2.9000",
+        "NeedsCompilation": "no",
+        "Packaged": "2025-10-28 00:16:56 UTC; bolker",
+        "Author": "Ben Bolker [aut, cre] (ORCID: <https://orcid.org/0000-0002-2127-0443>)",
+        "Maintainer": "Ben Bolker <bolker@mcmaster.ca>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-10-28 06:10:17 UTC",
+        "Built": "R 4.5.0; ; 2025-10-28 06:57:20 UTC; unix",
+        "RemoteType": "standard",
+        "RemotePkgRef": "reformulas",
+        "RemoteRef": "reformulas",
+        "RemoteRepos": "https://cran.rstudio.com",
+        "RemoteSha": "0.4.2"
       }
     },
     "rematch": {
@@ -2367,8 +2752,44 @@
     }
   },
   "files": {
-    "tracking_analysis_shiny.R": {
-      "checksum": "c4a9e6d7b78a71e1a8f8b506dadfbb3e"
+    ".Rapp.history": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "app_fixed_flyid_and_meanpeaks_with_compare.R": {
+      "checksum": "c0c02c05db557cd974a4caf87434d90b"
+    },
+    "app_fixed_flyid_and_meanpeaks.R": {
+      "checksum": "68c42b1180936945fc69e92892989e2a"
+    },
+    "app_with_lmer_meanpeaks_fixed.R": {
+      "checksum": "80a09eb9a3e0b98913bf63f62b94068d"
+    },
+    "app.R": {
+      "checksum": "0a3662010061ab6e77e7b3fd3a5fffc0"
+    },
+    "drafts/server_backup.r": {
+      "checksum": "599cf56fc2b99afbe85ab6317079e58b"
+    },
+    "drafts/tracking_analysis_shiny_dan_double.R": {
+      "checksum": "021035970565c57b318c1f4d8a8c90b6"
+    },
+    "drafts/tracking_analysis_shiny_experimental_dan_double.R": {
+      "checksum": "021035970565c57b318c1f4d8a8c90b6"
+    },
+    "drafts/tracking_analysis_shiny_experimental_dan.R": {
+      "checksum": "fc04097c6feedef78181223ee4c6ab8f"
+    },
+    "drafts/tracking_analysis_shiny_experimental.R": {
+      "checksum": "b925730fb2d864f6a474bbb53a9d728d"
+    },
+    "drafts/UI_backup.r": {
+      "checksum": "0786ba54a6e4dd089445ec3dee2194ac"
+    },
+    "drafts/UI_drafts.r": {
+      "checksum": "e1a42a0ff02d69520dd9607131549c3d"
+    },
+    "README.md": {
+      "checksum": "5706c76f19f64621f6d2e9e30e1b20bf"
     }
   },
   "users": null
