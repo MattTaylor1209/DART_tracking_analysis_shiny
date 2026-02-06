@@ -300,11 +300,11 @@ server <- function(input, output, session) {
     req(length(shs) > 0)
     
     # Validate selection
-    if (is.null(input$sheet_name) || !(input$sheet_name %in% shs)) {
+    if (is.null(input$data) || !(input$data %in% shs)) {
       validate(need(FALSE, "Selected sheet not found in the uploaded file. Please choose a valid sheet."))
     }
     
-    readxl::read_excel(input$file$datapath, sheet = input$sheet_name)
+    readxl::read_excel(input$file$datapath, sheet = input$data)
   })
   
   
