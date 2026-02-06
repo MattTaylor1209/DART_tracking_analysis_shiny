@@ -9,6 +9,8 @@ library(ggtext)
 library(RColorBrewer)
 library(ggsci)
 library(emmeans)
+library(lme4)
+library(lmerTest)
 
 
 options(shiny.maxRequestSize = 200 * 1024^2)  # 200 MB
@@ -107,6 +109,8 @@ ui <- fluidPage(
       ),
       checkboxInput("lm_show_ci", "Show 95% CI ribbon", value = TRUE),
       numericInput("lm_ci_mult", "CI multiplier (1.96 ≈ 95%)", min = 0, max = 10, step = 0.01, value = 1.96),
+      checkboxInput("lm_random_slope", "Allow per-fly random slope (stimulus)", value = FALSE),
+      checkboxInput("lm_compare_models", "Compare random-intercept vs random-slope models", value = TRUE),
       
       
       tags$hr(),
@@ -233,14 +237,15 @@ ui <- fluidPage(
         tabPanel(
           "Regression (peaks)",
           fluidRow(
-            column(12, tableOutput("peak_table"))
+            column(12, verbatimTextOutput("lm_summary"))
           ),
           fluidRow(
-            column(12, verbatimTextOutput("lm_summary"))
+            column(12, verbatimTextOutput("lm_compare"))
+          ),
+          fluidRow(
+            column(12, tableOutput("peak_table"))
           )
         )
-        
-        
       )
     )
   )
@@ -377,52 +382,163 @@ server <- function(input, output, session) {
       )
   })
   
-  lm_peak_fit <- reactive({
-    if (!isTRUE(input$lm_enable)) return(NULL)
-    
-    df <- summarized_data()
-    y_col <- req(input$lm_y)
-    
-    peaks <- df %>%
-      group_by(StimNo) %>%
-      slice_max(.data[[y_col]], n = 1, with_ties = FALSE) %>%
-      ungroup() %>%
-      transmute(
-        stim_no   = as.numeric(StimNo),
-        stim_no_c = as.numeric(StimNo) - 1,
-        stim_time = (as.numeric(StimNo) - 1) * as.numeric(input$stimgap) + (as.numeric(input$pretime) * 60),
-        time_peak = time,
-        peak      = .data[[y_col]]
-      ) %>%
-      arrange(stim_no)
-    
-    if (nrow(peaks) < 2 || all(is.na(peaks$peak))) return(NULL)
-    
-    fit <- lm(peak ~ stim_no_c, data = peaks)
-    
-    pred <- peaks %>%
+  peak_data <- reactive({
+    req(values$merged_data)
+    values$merged_data %>%
+      group_by(time, StimNo) %>%
       mutate(
-        pred = predict(fit, newdata = ., se.fit = TRUE)$fit,
-        se   = predict(fit, newdata = ., se.fit = TRUE)$se.fit,
-        lo   = pred - as.numeric(input$lm_ci_mult) * se,
-        hi   = pred + as.numeric(input$lm_ci_mult) * se
+        fly_id = row_number()
+      ) %>%
+      ungroup() %>%
+      group_by(time, StimNo, fly_id) %>%
+      summarize(
+        #fly_id = row_number(),
+        mean_speed     = mean(predicted_speeds, na.rm = TRUE),
+        mean_raw_speed = mean(speed, na.rm = TRUE),
+        se_speed       = sd(predicted_speeds, na.rm = TRUE) / sqrt(n()),
+        mean_rel_speed = mean(relative_speed, na.rm = TRUE),
+        .groups = "drop"
       )
-    
-    list(peaks = peaks, pred = pred, fit = fit)
   })
   
+  peak_table <- reactive({
+    req(values$merged_data, input$lm_y, input$stimgap, input$pretime)
+    
+    validate(need("Group" %in% names(values$merged_data),
+                  "Couldn't find a fly identifier column. Expected a 'Group' column (from pivot_longer names_to='Group')."))
+    
+    # Map UI choices to a column that actually exists in values$merged_data
+    y_col <- switch(
+      input$lm_y,
+      "mean_speed"     = "predicted_speeds",
+      "mean_rel_speed" = "relative_speed",
+      "mean_raw_speed" = "speed",
+      input$lm_y  # fallback: allow direct column names if you pass them
+    )
+    
+    validate(need(y_col %in% names(values$merged_data),
+                  paste0("Regression variable '", input$lm_y,
+                         "' maps to '", y_col,
+                         "', but that column wasn't found in merged_data.")))
+    
+    values$merged_data %>%
+      mutate(
+        fly_id   = .data$Group,  # fly IDs are the original wide column names (except 'time')
+        stim_no  = as.numeric(StimNo),
+        stim_no_c = stim_no - 1,
+        stim_time = (stim_no - 1) * as.numeric(input$stimgap) + (as.numeric(input$pretime) * 60),
+        y = .data[[y_col]]
+      ) %>%
+      group_by(fly_id, StimNo) %>%
+      slice_max(y, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      transmute(
+        fly_id,
+        StimNo,
+        stim_no,
+        stim_no_c,
+        stim_time,
+        time_peak = time,
+        peak = y
+      ) %>%
+      arrange(stim_no, fly_id)
+  })
+  
+  peak_summary <- reactive({
+    peaks <- peak_table()
+    peaks %>%
+      group_by(stim_no, stim_no_c, stim_time) %>%
+      summarise(
+        mean_peak = mean(peak, na.rm = TRUE),
+        se_peak   = sd(peak, na.rm = TRUE) / sqrt(sum(!is.na(peak))),
+        n         = sum(!is.na(peak)),
+        .groups = "drop"
+      ) %>%
+      arrange(stim_no)
+  })
+  
+  lmer_fits <- reactive({
+    if (!isTRUE(input$lm_enable)) return(NULL)
+    peaks <- peak_table()
+    validate(need(nrow(peaks) >= 2, "Not enough peaks to fit model."))
+    
+    # Random-intercept model (REML for estimates)
+    fit_ri <- lmerTest::lmer(peak ~ stim_no_c + (1 | fly_id), data = peaks, REML = TRUE)
+    
+    # Random-slope + intercept model (may fail / be singular for some datasets)
+    fit_rs <- tryCatch(
+      lmerTest::lmer(peak ~ stim_no_c + (stim_no_c | fly_id), data = peaks, REML = TRUE),
+      error = function(e) NULL
+    )
+    
+    list(peaks = peaks, fit_ri = fit_ri, fit_rs = fit_rs)
+  })
+  
+  lmer_fit_selected <- reactive({
+    x <- lmer_fits()
+    if (is.null(x)) return(NULL)
+    
+    if (isTRUE(input$lm_random_slope) && !is.null(x$fit_rs)) {
+      x$fit_rs
+    } else {
+      x$fit_ri
+    }
+  })
+  
+  lmer_compare <- reactive({
+    if (!isTRUE(input$lm_enable) || !isTRUE(input$lm_compare_models)) return(NULL)
+    x <- lmer_fits()
+    if (is.null(x) || is.null(x$fit_rs)) return(NULL)
+    
+    # Use ML fits for likelihood ratio test
+    fit_ri_ml <- lme4::refitML(x$fit_ri)
+    fit_rs_ml <- lme4::refitML(x$fit_rs)
+    anova(fit_ri_ml, fit_rs_ml)
+    
+  })
+  
+  lmer_line_ci <- reactive({
+    fit <- lmer_fit_selected()
+    if (is.null(fit)) return(NULL)
+    
+    grid <- peak_summary() %>% select(stim_no, stim_no_c, stim_time)
+    
+    X  <- model.matrix(~ stim_no_c, data = grid)
+    b  <- lme4::fixef(fit)
+    V  <- as.matrix(stats::vcov(fit))     # fixed-effect var-cov
+    se <- sqrt(diag(X %*% V %*% t(X)))
+    
+    grid$pred <- as.numeric(X %*% b)
+    mult <- as.numeric(input$lm_ci_mult)
+    grid$lo <- grid$pred - mult * se
+    grid$hi <- grid$pred + mult * se
+    
+    grid
+  })
+  
+  
   output$peak_table <- renderTable({
-    x <- lm_peak_fit()
-    validate(need(!is.null(x), "Enable the regression overlay and generate curves/plots to see results here."))
-    x$peaks
+    peaks <- peak_table()
+    validate(need(!is.null(peaks) && nrow(peaks) > 0, "Enable the regression overlay and calculate parameters to generate peak data."))
+    peaks
   })
   
   output$lm_summary <- renderPrint({
-    x <- lm_peak_fit()
-    validate(need(!is.null(x), "Enable the regression overlay and generate curves/plots to see results here."))
-    summary(x$fit)
+    fit <- lmer_fit_selected()
+    validate(need(!is.null(fit), "Enable the regression overlay and calculate parameters to fit the model."))
+    
+    cat("Model used:", if (isTRUE(input$lm_random_slope)) "Random slope + intercept (if available)" else "Random intercept only", "\n")
+    if (inherits(fit, "merMod") && lme4::isSingular(fit, tol = 1e-4)) {
+      cat("NOTE: Model is singular (one or more random-effect variances ~ 0, or correlations at boundary).\n\n")
+    }
+    print(summary(fit))
   })
   
+  output$lm_compare <- renderPrint({
+    cmp <- lmer_compare()
+    validate(need(!is.null(cmp), "Enable model comparison (and ensure random-slope model fits) to see results."))
+    print(cmp)
+  })
   
   # Code to calculate the parameters for the fitted line upon pressing the
   # calculate parameters button
@@ -837,31 +953,48 @@ server <- function(input, output, session) {
         )
       
       # Optional: overlay a linear regression across per-stimulation peaks (like the Quarto workflow)
-      lm_obj <- lm_peak_fit()
-      if (!is.null(lm_obj)) {
-        if (isTRUE(input$lm_show_ci)) {
-          p <- p + geom_ribbon(
-            data = lm_obj$pred,
-            aes(x = stim_time, ymin = lo, ymax = hi),
-            inherit.aes = FALSE,
-            alpha = 0.2
-          )
-        }
-        p <- p +
-          geom_line(
-            data = lm_obj$pred,
+      # Optional: overlay lmer line fitted on per-fly peaks,
+      # but PLOT only mean±SE peaks
+      if (isTRUE(input$lm_enable)) {
+        ln <- lmer_line_ci()
+        ps <- peak_summary()
+        
+        if (!is.null(ln)) {
+          
+          # mean peak ± SE points (what you want to see)
+          p <- p +
+            geom_errorbar(
+              data = ps,
+              aes(x = stim_time, ymin = mean_peak - se_peak, ymax = mean_peak + se_peak),
+              inherit.aes = FALSE,
+              width = 0
+            ) +
+            geom_point(
+              data = ps,
+              aes(x = stim_time, y = mean_peak),
+              inherit.aes = FALSE,
+              size = 5
+            )
+          
+          # line + CI for fixed effect
+          if (isTRUE(input$lm_show_ci)) {
+            p <- p + geom_ribbon(
+              data = ln,
+              aes(x = stim_time, ymin = lo, ymax = hi),
+              inherit.aes = FALSE,
+              alpha = 0.2
+            )
+          }
+          
+          p <- p + geom_line(
+            data = ln,
             aes(x = stim_time, y = pred),
             inherit.aes = FALSE,
-            linetype = "solid",
             linewidth = 1
-          ) +
-          geom_point(
-            data = lm_obj$peaks,
-            aes(x = stim_time, y = peak),
-            inherit.aes = FALSE,
-            size = 2
           )
+        }
       }
+      
       
       p
       
@@ -924,30 +1057,46 @@ server <- function(input, output, session) {
         )
       
       # Optional: overlay a linear regression across per-stimulation peaks (like the Quarto workflow)
-      lm_obj <- lm_peak_fit()
-      if (!is.null(lm_obj)) {
-        if (isTRUE(input$lm_show_ci)) {
-          p <- p + geom_ribbon(
-            data = lm_obj$pred,
-            aes(x = stim_time, ymin = lo, ymax = hi),
-            inherit.aes = FALSE,
-            alpha = 0.2
-          )
-        }
-        p <- p +
-          geom_line(
-            data = lm_obj$pred,
+      # Optional: overlay lmer line fitted on per-fly peaks,
+      # but PLOT only mean±SE peaks
+      if (isTRUE(input$lm_enable)) {
+        ln <- lmer_line_ci()
+        ps <- peak_summary()
+        
+        if (!is.null(ln)) {
+          
+          # mean peak ± SE points (what you want to see)
+          p <- p +
+            geom_errorbar(
+              data = ps,
+              aes(x = stim_time, ymin = mean_peak - se_peak, ymax = mean_peak + se_peak),
+              inherit.aes = FALSE,
+              width = 0
+            ) +
+            geom_point(
+              data = ps,
+              aes(x = stim_time, y = mean_peak),
+              inherit.aes = FALSE,
+              size = 5
+            )
+          
+          # line + CI for fixed effect
+          if (isTRUE(input$lm_show_ci)) {
+            p <- p + geom_ribbon(
+              data = ln,
+              aes(x = stim_time, ymin = lo, ymax = hi),
+              inherit.aes = FALSE,
+              alpha = 0.2
+            )
+          }
+          
+          p <- p + geom_line(
+            data = ln,
             aes(x = stim_time, y = pred),
             inherit.aes = FALSE,
-            linetype = "solid",
             linewidth = 1
-          ) +
-          geom_point(
-            data = lm_obj$peaks,
-            aes(x = stim_time, y = peak),
-            inherit.aes = FALSE,
-            size = 2
           )
+        }
       }
       
       p
