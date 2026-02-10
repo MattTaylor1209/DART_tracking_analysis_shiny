@@ -695,7 +695,8 @@ server <- function(input, output, session) {
         showNotification("Data retrieved successfully.", type = "message")
         cat("Data retrieved successfully.\n")
         
-        
+        showNotification("Optimising parameters...", type = "message")
+        cat("Optimising parameters...\n")
         
         # Vector of random columns for data selection
         if (ncol(stim_data) > 9) {
@@ -730,8 +731,7 @@ server <- function(input, output, session) {
         # curve fitting.
         stim_data$relative_speed <- stim_data$speed - pre_stimuli_avg_speed
         
-        showNotification("Optimising parameters...", type = "message")
-        cat("Optimising parameters...\n")
+        
         # Optimizing parameters of the fitted exponential curve.
         # Initial parameter estimates
         initial_params <- c(dt = input$prestim, A0 = 0.1, A1 = 2, tauA = 0.1, tauB = 3)
@@ -790,15 +790,17 @@ server <- function(input, output, session) {
           colnames(collated_data) <- c("Stim number", "Mean pre-stim speed", "Max relative amplitude", "Max fitted amplitude", "GOF")
           collated_data
         })
-        showNotification("Parameters should now be optimised.", type = "message")
-        cat("Parameters should now be optimised.\n")
         
         # clear stimdata 
         
         stim_data <- c()
         j <- j+1
+        
+        showNotification("Parameters should now be optimised.", type = "message")
+        cat("Parameters should now be optimised.\n")
       }
       #i <- i+1
+      
     }
   })
   
@@ -902,14 +904,14 @@ server <- function(input, output, session) {
             colnames(collated_data) <- c("Stim number", "Mean pre-stim speed", "Max relative amplitude", "Max fitted amplitude", "GOF")
             collated_data
           })
-          showNotification("Parameters should now be optimised.", type = "message")
-          cat("Parameters should now be optimised.\n")
           
           # clear stimdata 
           
           fly_data <- c()
         }
       }
+      showNotification("Parameters should now be optimised.", type = "message")
+      cat("Parameters should now be optimised.\n")
     }
   })
   
