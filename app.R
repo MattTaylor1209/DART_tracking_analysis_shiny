@@ -189,16 +189,21 @@ ui <- fluidPage(
           ),
           
           fluidRow(
-            column(6, tableOutput("output")),
-            column(4, tableOutput("gofoutput")),
+            column(8, tableOutput("output"))
+          ),
+          fluidRow(
             column(
               2,
               actionButton(
                 "cleartable",
                 HTML("Clear tables<br>(do this between groups<br>or when changing stims)")
               )
-            )
+            )),
+            
+          fluidRow(
+            tableOutput("gofoutput")
           ),
+            
           
           # fluidRow(
           #   column(12, actionButton("calcparam", "Calculate/update parameters"))
@@ -209,12 +214,12 @@ ui <- fluidPage(
             column(3, actionButton("sequentialcalc", "Calculate per-fly curves"))
           ),
           
-          fluidRow(
-            h2("Random fly selection"),
-            column(3, numericInput("randomno", "How many flies to randomly sample?", value = 10, min = 1, step = 1, max = 20)),
-            column(3, numericInput("times", "How many times to repeat calculations?", value = 10, min = 1, step = 1, max = 20)),
-            column(3, actionButton("randomcalc", "Select x flies randomly and calculate parameters"))
-          )
+          # fluidRow(
+          #   h2("Random fly selection"),
+          #   column(3, numericInput("randomno", "How many flies to randomly sample?", value = 10, min = 1, step = 1, max = 20)),
+          #   column(3, numericInput("times", "How many times to repeat calculations?", value = 10, min = 1, step = 1, max = 20)),
+          #   column(3, actionButton("randomcalc", "Select x flies randomly and calculate parameters"))
+          # )
         ),
         
         tabPanel(
@@ -370,7 +375,8 @@ server <- function(input, output, session) {
     max_speed_rel = NULL,
     max_speed_list = NULL,
     max_rel_speed_list = NULL,
-    GOFs = NULL
+    GOFs = NULL,
+    tauA = NULL
   )
   
   # ---------------------------
@@ -868,6 +874,7 @@ server <- function(input, output, session) {
           fly_data$predicted_speeds <- sapply(stim_data$time, function(t) model_function(t, optimized_params["dt"], optimized_params["A0"], optimized_params["A1"], optimized_params["tauA"], optimized_params["tauB"]))
           fly_data$GOF <- -optim_results$value
           fly_data$StimNo <- values$stim_number
+          fly_data$tauA <- optimized_params[["tauA"]]
           # Find the index of the maximum speeds
           max_index <- which.max(fly_data$predicted_speeds)
           max_index_rel <- which.max(fly_data$relative_speed)
@@ -892,6 +899,7 @@ server <- function(input, output, session) {
           values$max_time_rel <- max_time_rel
           values$max_speed_rel <- max_speed_rel
           values$GOFs <- c(values$GOFs, fly_data$GOF[1])
+          values$tauA <- c(values$tauA, fly_data$tauA[1])
           values$merged_data <- rbind(values$merged_data, values$data)
           
           # Outputting the top of the data table with the newly calculated 
@@ -900,8 +908,8 @@ server <- function(input, output, session) {
           })
           
           output$gofoutput <- renderTable({
-            collated_data <- cbind(values$stim_number_list, values$pre_stim_speed_list, values$max_rel_speed_list, values$max_speed_list, values$GOFs)
-            colnames(collated_data) <- c("Stim number", "Mean pre-stim speed", "Max relative amplitude", "Max fitted amplitude", "GOF")
+            collated_data <- cbind(values$stim_number_list, values$pre_stim_speed_list, values$max_rel_speed_list, values$max_speed_list, values$GOFs, values$tauA)
+            colnames(collated_data) <- c("Stim number", "Mean pre-stim speed", "Max relative amplitude", "Max fitted amplitude", "GOF", "tauA")
             collated_data
           })
           
