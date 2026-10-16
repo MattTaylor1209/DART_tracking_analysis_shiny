@@ -18,48 +18,69 @@ options(shiny.maxRequestSize = 200 * 1024^2)  # 200 MB
 #### FUNCTIONS ####
 
 
-# Defining the exponential model function based on the Nature 2015 paper methods section
+# Single-inactivation model from Faville et al. (2015) Sci Rep, eqn 13:
+#   V(tau) = (1 - exp(-tau/tauA)) * (A0 + A1 * exp(-tau/tauB)) * H(tau),  tau = t - dt
+# Vectorised over t. No clamping of time constants here: positivity and
+# tauA <= tauB are enforced by the parameterisation/bounds in fit_dart().
+# pmax(t - dt, 0) makes the rise factor exactly 0 before dt, so H(tau) is implicit.
 model_function <- function(t, dt, A0, A1, tauA, tauB) {
-  tau <- t - dt
-  H_tau <- ifelse(tau > 0, 1, 0)
-  
-  # Avoid division by zero or negative time constants
-  tauA <- max(tauA, .Machine$double.eps)
-  tauB <- max(tauB, .Machine$double.eps)
-  
-  exp_neg_tauA <- exp(-max(tau, 0) / tauA)
-  exp_neg_tauB <- exp(-max(tau, 0) / tauB)
-  
-  (1 - exp_neg_tauA) * (A0 + A1 * exp_neg_tauB) * H_tau
+  tau <- pmax(t - dt, 0)
+  (1 - exp(-tau / tauA)) * (A0 + A1 * exp(-tau / tauB))
 }
 
-# Function to calculate an R-squared value of the exponential fit.
-calculate_R_squared <- function(params, data) {
-  names(params) <- c("dt", "A0", "A1", "tauA", "tauB")
+# Objective: sum of squared errors. (Minimising SSE is equivalent to maximising
+# R^2 for a given trace, since SST is fixed.)
+# p = c(dt, A0, A1, tauA, dtau); tauB = tauA + dtau, so tauB >= tauA always.
+sse_fn <- function(p, data) {
+  pred <- model_function(data$time, p[["dt"]], p[["A0"]], p[["A1"]],
+                         p[["tauA"]], p[["tauA"]] + p[["dtau"]])
+  sse <- sum((data$relative_speed - pred)^2)
+  if (!is.finite(sse)) return(1e12)  # keep L-BFGS-B away from non-finite regions
+  sse
+}
+
+# Fit one trace. Returns a list of parameters, fit statistics and bound flags.
+#   stim_time  : stimulus onset (s, same clock as data$time)
+#   flex       : allowed +/- window for dt around stim_time (s)
+#   tauA_min   : smallest tauA allowed (s); ~ sampling interval is sensible
+fit_dart <- function(data, stim_time, flex, tauA_min = 0.1) {
+  data <- data[is.finite(data$time) & is.finite(data$relative_speed), ]
   
-  predicted <- sapply(data$time, function(t) {
-    model_function(t, params["dt"], params["A0"], params["A1"], params["tauA"], params["tauB"])
-  })
+  lower <- c(dt = stim_time - flex, A0 = 0,  A1 = 0,  tauA = tauA_min, dtau = 0)
+  upper <- c(dt = stim_time + flex, A0 = 10, A1 = 20, tauA = 20,       dtau = 50)
+  start <- c(dt = stim_time,        A0 = 0.1, A1 = 2, tauA = max(1, tauA_min), dtau = 3)
   
-  # Check for NaN or Inf in predicted
-  if(any(is.na(predicted) | is.infinite(predicted))) {
-    cat("Non-finite values detected in predicted speeds.\n")
-    return(Inf)  # Return Inf to indicate a bad result
-  }
+  fit <- optim(
+    par = start, fn = sse_fn, data = data, method = "L-BFGS-B",
+    lower = lower, upper = upper,
+    control = list(maxit = 10000)
+  )
   
-  # Checking how close the predicted speed (based on the model function) is to the actual calculated relative speed. 
-  residuals <- data$relative_speed - predicted
-  SSE <- sum(residuals^2)
-  SST <- sum((data$relative_speed - mean(data$relative_speed))^2)
+  p   <- fit$par
+  sst <- sum((data$relative_speed - mean(data$relative_speed))^2)
   
-  R_squared <- 1 - SSE / SST
+  # Flag parameters sitting on a bound (tolerance relative to the bound range)
+  tol      <- 1e-4 * (upper - lower)
+  at_lower <- abs(p - lower) <= tol
+  at_upper <- abs(p - upper) <= tol
   
-  if(is.finite(R_squared)){
-    return(-R_squared)
-  } else {
-    cat("Non-finite R_squared value detected.\n")
-    return(0)
-  }
+  list(
+    dt        = p[["dt"]],
+    latency   = p[["dt"]] - stim_time,
+    A0        = p[["A0"]],
+    A1        = p[["A1"]],
+    tauA      = p[["tauA"]],
+    tauB      = p[["tauA"]] + p[["dtau"]],
+    R2        = 1 - fit$value / sst,
+    converged = fit$convergence == 0,
+    # tauA at its floor = activation faster than the sampling can resolve
+    tauA_at_lower = unname(at_lower["tauA"]),
+    # dtau at 0 = tauB collapsed onto tauA (inactivation not separable)
+    tauB_eq_tauA  = unname(at_lower["dtau"]),
+    tauB_at_upper = unname(at_upper["tauA"] | at_upper["dtau"]),
+    dt_at_bound   = unname(at_lower["dt"] | at_upper["dt"]),
+    any_at_bound  = any(at_lower | at_upper)
+  )
 }
 
 
@@ -77,7 +98,8 @@ ui <- fluidPage(
     sidebarPanel(
       width = 3, 
       tags$h4("Calculation options"),
-      numericInput("dtflexibility", "dt flexibility:", min = 0, max = 10, step = 0.5, value = 2),
+      numericInput("dtflexibility", "dt flexibility (± s around stimulus):", min = 0, max = 10, step = 0.5, value = 2),
+      numericInput("tauA_min", "Minimum tauA (s; ~ sampling interval):", min = 0.01, max = 5, step = 0.05, value = 0.1),
       tags$hr(),
       
       tags$h4("Plotting options"),
@@ -114,7 +136,8 @@ ui <- fluidPage(
       
       
       tags$hr(),
-      downloadButton("download_data", "Download full data")
+      downloadButton("download_data", "Download full data"),
+      downloadButton("download_fits", "Download fit table")
     ),
     
     mainPanel(
@@ -199,11 +222,11 @@ ui <- fluidPage(
                 HTML("Clear tables<br>(do this between groups<br>or when changing stims)")
               )
             )),
-            
+          
           fluidRow(
             tableOutput("gofoutput")
           ),
-            
+          
           
           # fluidRow(
           #   column(12, actionButton("calcparam", "Calculate/update parameters"))
@@ -237,6 +260,23 @@ ui <- fluidPage(
           "Full fitted plot",
           fluidRow(column(4, actionButton("plotfullfitted", "Update full fitted data graph"))),
           fluidRow(plotOutput("fulldatafitted", width = "1200px", height = "600px"))
+        ),
+        
+        tabPanel(
+          "Individual fly",
+          fluidRow(
+            column(4, selectInput("fly_select", "Fly", choices = NULL)),
+            column(2, br(), actionButton("fly_prev", "◀ Previous")),
+            column(2, br(), actionButton("fly_next", "Next ▶")),
+            column(4, selectInput("fly_stims", "Stimulation(s)", choices = NULL, multiple = TRUE))
+          ),
+          fluidRow(
+            column(4, checkboxInput("fly_show_raw", "Show raw speed", value = TRUE)),
+            column(4, checkboxInput("fly_show_dt", "Mark fitted onset (dt)", value = TRUE)),
+            column(4, checkboxInput("fly_free_y", "Auto-scale y-axis", value = FALSE))
+          ),
+          fluidRow(plotOutput("fly_plot", width = "1200px", height = "600px")),
+          fluidRow(column(12, h4("Fit parameters for this fly"), tableOutput("fly_params")))
         ),
         
         tabPanel(
@@ -376,8 +416,8 @@ server <- function(input, output, session) {
     max_speed_list = NULL,
     max_rel_speed_list = NULL,
     GOFs = NULL,
-    tauA = NULL,
-    tauB = NULL
+    R2 = NULL,
+    fit_table = NULL   # one row per fly x stim: parameters, GOF and bound flags
   )
   
   # ---------------------------
@@ -564,104 +604,6 @@ server <- function(input, output, session) {
     print(cmp)
   })
   
-  # Code to calculate the parameters for the fitted line upon pressing the
-  # calculate parameters button
-  # observeEvent(input$calcparam, {
-  #   
-  #   
-  #   for(i in as.numeric(input$stimulations)) {
-  #     values$stim_number <- i
-  #     showNotification("Retrieving data for stimulation number:", i, type = "message")
-  #     cat("Retrieving data for stimulation number:", i, "\n")
-  #     
-  #     data <- sheet()
-  #     data$time <- as.numeric(data$time)
-  #     stim_data <- get_data(data, i, as.numeric(input$pretime), as.numeric(input$prestim), as.numeric(input$stimgap), as.numeric(input$poststim))
-  #     req(stim_data)  # Ensure data is not NULL before continuing
-  #     
-  #     showNotification("Data retrieved successfully.", type = "message")
-  #     cat("Data retrieved successfully.\n")
-  #     
-  #     # Data needs to be tidied into long format
-  #     stim_data <- stim_data %>% 
-  #       pivot_longer(!time, names_to = "Group", values_to = "speed") %>% 
-  #       filter(Group %in% input$group)
-  #     # 60 second time window prior to stimulation taken to calculate the pre-stimulation speed
-  #     pre_stimuli_avg_speed <- mean(stim_data$speed[1:as.numeric(input$prestim)])
-  #     # Mean of pre-stimulation speed subtracted from raw speed to give relative speed. Necessary for
-  #     # curve fitting.
-  #     stim_data$relative_speed <- stim_data$speed - pre_stimuli_avg_speed
-  #     
-  #     showNotification("Optimising parameters...", type = "message")
-  #     cat("Optimising parameters...\n")
-  #     # Optimizing parameters of the fitted exponential curve.
-  #     # Initial parameter estimates
-  #     initial_params <- c(dt = input$prestim, A0 = 0.1, A1 = 2, tauA = 0.1, tauB = 3)
-  #     
-  #     optim_results <- optim(
-  #       par = initial_params,
-  #       fn = calculate_R_squared,
-  #       data = stim_data,
-  #       method = "L-BFGS-B",
-  #       lower = c(dt = stim_data$time[isolate(input$prestim)-isolate(input$dtflexibility)], A0 = 0, A1 = 0, tauA = -10, tauB = 0),
-  #       upper = c(dt = stim_data$time[isolate(input$prestim)+isolate(input$dtflexibility)], A0 = 10, A1 = 20, tauA = 20, tauB = 50),
-  #       control = list(maxit = 9999999)
-  #     )
-  #     
-  #     optimized_params <- optim_results$par
-  #     names(optimized_params) <- c("dt", "A0", "A1", "tauA", "tauB")
-  #     
-  #     # Making a new column in data which contains the predicted speeds - i.e, the speeds calculated
-  #     # through the exponential model.
-  #     stim_data$predicted_speeds <- sapply(stim_data$time, function(t) model_function(t, optimized_params["dt"], optimized_params["A0"], optimized_params["A1"], optimized_params["tauA"], optimized_params["tauB"]))
-  #     stim_data$GOF <- -optim_results$value
-  #     stim_data$StimNo <- values$stim_number
-  #     # Find the index of the maximum speeds
-  #     max_index <- which.max(stim_data$predicted_speeds)
-  #     max_index_rel <- which.max(stim_data$relative_speed)
-  #     
-  #     # Find the time and value of the maximum speeds
-  #     max_time <- stim_data$time[max_index]
-  #     max_speed <- stim_data$predicted_speeds[max_index]
-  #     max_time_rel <- stim_data$time[max_index_rel]
-  #     max_speed_rel <- stim_data$relative_speed[max_index_rel]
-  #     
-  #     # Storing results in reactive values
-  #     values$data <- stim_data
-  #     values$pre_stim_speed <- pre_stimuli_avg_speed
-  #     values$pre_stim_speed_list <- c(values$pre_stim_speed_list, pre_stimuli_avg_speed)
-  #     values$merged_data <- rbind(values$merged_data, values$data)
-  #     values$optimized_params <- optim_results$par
-  #     values$optim_results <- optim_results
-  #     values$max_time <- max_time
-  #     values$max_speed <- max_speed
-  #     values$max_speed_list <- c(values$max_speed_list, max_speed)
-  #     values$max_rel_speed_list <- c(values$max_rel_speed_list, max_speed_rel)
-  #     values$stim_number_list <- c(values$stim_number_list, values$stim_number)
-  #     values$max_time_rel <- max_time_rel
-  #     values$max_speed_rel <- max_speed_rel
-  #     values$GOFs <- c(values$GOFs, stim_data$GOF[1])
-  #     
-  #     # Outputting the top of the data table with the newly calculated 
-  #     output$output <- renderTable({
-  #       head(values$data)
-  #     })
-  #     
-  #     output$gofoutput <- renderTable({
-  #       collated_data <- cbind(values$stim_number_list, values$pre_stim_speed_list, values$max_rel_speed_list, values$max_speed_list, values$GOFs)
-  #       colnames(collated_data) <- c("Stim number", "Mean pre-stim speed", "Max relative amplitude", "Max fitted amplitude", "GOF")
-  #       collated_data
-  #     })
-  #     showNotification("Parameters should now be optimised.", type = "message")
-  #     cat("Parameters should now be optimised.\n")
-  #     
-  #     # clear stimdata 
-  #     
-  #     stim_data <- c()
-  #     #i <- i+1
-  #   }
-  # })
-  
   observeEvent(input$cleartable, {
     collated_data <- NULL
     values$GOFs <- NULL
@@ -671,145 +613,20 @@ server <- function(input, output, session) {
     values$max_rel_speed_list <- NULL
     values$stim_number_list <- NULL
     values$merged_data <- NULL
+    values$fit_table <- NULL
+    values$R2 <- NULL
     output$gofoutput <- renderTable({
       collated_data
     })
   })
   
   observe({
-    # Ensure the optim_results value is available and not NULL
-    if (!is.null(values$optim_results) && -values$optim_results$value < 0.2) {
+    # R^2 is now stored directly (the optimiser minimises SSE, not -R^2)
+    if (!is.null(values$R2) && is.finite(values$R2) && values$R2 < 0.2) {
       showNotification("GOF is less than 0.2", type = "message")
       cat("GOF is less than 0.2\n")
     }
   })
-  
-  # Code to randomly select x flies from the data, take a mean and then calculate
-  # the fit. 
-  # observeEvent(input$randomcalc, {
-  #   
-  #   for(i in as.numeric(input$stimulations)) {
-  #     for(j in 1:input$times){
-  #       values$stim_number <- i
-  #       showNotification("Retrieving data for stimulation number:", i, type = "message")
-  #       cat("Retrieving data for stimulation number:", i, "\n")
-  #       
-  #       data <- sheet()
-  #       data$time <- as.numeric(data$time)
-  #       stim_data <- get_data(data, i, as.numeric(input$pretime), as.numeric(input$prestim), as.numeric(input$stimgap), as.numeric(input$poststim))
-  #       req(stim_data)  # Ensure data is not NULL before continuing
-  #       
-  #       showNotification("Data retrieved successfully.", type = "message")
-  #       cat("Data retrieved successfully.\n")
-  #       
-  #       showNotification("Optimising parameters...", type = "message")
-  #       cat("Optimising parameters...\n")
-  #       
-  #       # Vector of random columns for data selection
-  #       if (ncol(stim_data) > 9) {
-  #         randomcols <- sample(2:ncol(stim_data), isolate(input$randomno), replace = FALSE)
-  #         
-  #         # subset the data table including only these random columns
-  #         stim_data <- stim_data[, c(1, randomcols)]
-  #         #print(stim_data)
-  #         
-  #         # Calculate the row means (excluding the first row for each mean calculation)
-  #         row_means <- rowMeans(stim_data[, -1], na.rm = TRUE)
-  #         
-  #         
-  #         # Add the new column to the data frame
-  #         stim_data$tenmeans <- row_means
-  #         
-  #         # Select only the time and tenmeans columns
-  #         stim_data <- stim_data[, c(1, ncol(stim_data))]
-  #       }
-  #       else{
-  #         stop("Not enough columns in data")
-  #       }
-  #       
-  #       
-  #       
-  #       # Data needs to be tidied into long format
-  #       stim_data <- stim_data %>% 
-  #         pivot_longer(!time, names_to = "Group", values_to = "speed")
-  #       # 60 second time window prior to stimulation taken to calculate the pre-stimulation speed
-  #       pre_stimuli_avg_speed <- mean(stim_data$speed[1:as.numeric(input$prestim)])
-  #       # Mean of pre-stimulation speed subtracted from raw speed to give relative speed. Necessary for
-  #       # curve fitting.
-  #       stim_data$relative_speed <- stim_data$speed - pre_stimuli_avg_speed
-  #       
-  #       
-  #       # Optimizing parameters of the fitted exponential curve.
-  #       # Initial parameter estimates
-  #       initial_params <- c(dt = input$prestim, A0 = 0.1, A1 = 2, tauA = 0.1, tauB = 3)
-  #       
-  #       optim_results <- optim(
-  #         par = initial_params,
-  #         fn = calculate_R_squared,
-  #         data = stim_data,
-  #         method = "L-BFGS-B",
-  #         lower = c(dt = stim_data$time[isolate(input$prestim)-isolate(input$dtflexibility)], A0 = 0, A1 = 0, tauA = -10, tauB = 0),
-  #         upper = c(dt = stim_data$time[isolate(input$prestim)+isolate(input$dtflexibility)], A0 = 10, A1 = 20, tauA = 20, tauB = 50),
-  #         control = list(maxit = 9999999)
-  #       )
-  #       
-  #       optimized_params <- optim_results$par
-  #       names(optimized_params) <- c("dt", "A0", "A1", "tauA", "tauB")
-  #       
-  #       # Making a new column in data which contains the predicted speeds - i.e, the speeds calculated
-  #       # through the exponential model.
-  #       stim_data$predicted_speeds <- sapply(stim_data$time, function(t) model_function(t, optimized_params["dt"], optimized_params["A0"], optimized_params["A1"], optimized_params["tauA"], optimized_params["tauB"]))
-  #       stim_data$GOF <- -optim_results$value
-  #       stim_data$StimNo <- values$stim_number
-  #       # Find the index of the maximum speeds
-  #       max_index <- which.max(stim_data$predicted_speeds)
-  #       max_index_rel <- which.max(stim_data$relative_speed)
-  #       
-  #       # Find the time and value of the maximum speeds
-  #       max_time <- stim_data$time[max_index]
-  #       max_speed <- stim_data$predicted_speeds[max_index]
-  #       max_time_rel <- stim_data$time[max_index_rel]
-  #       max_speed_rel <- stim_data$relative_speed[max_index_rel]
-  #       
-  #       # Updating all of the reactive values
-  #       values$data <- stim_data
-  #       values$pre_stim_speed <- pre_stimuli_avg_speed
-  #       values$pre_stim_speed_list <- c(values$pre_stim_speed_list, pre_stimuli_avg_speed)
-  #       values$optimized_params <- optim_results$par
-  #       values$optim_results <- optim_results
-  #       values$max_time <- max_time
-  #       values$max_speed <- max_speed
-  #       values$max_speed_list <- c(values$max_speed_list, max_speed)
-  #       values$max_rel_speed_list <- c(values$max_rel_speed_list, max_speed_rel)
-  #       values$stim_number_list <- c(values$stim_number_list, values$stim_number)
-  #       values$max_time_rel <- max_time_rel
-  #       values$max_speed_rel <- max_speed_rel
-  #       values$GOFs <- c(values$GOFs, stim_data$GOF[1])
-  #       values$merged_data <- rbind(values$merged_data, values$data)
-  #       
-  #       # Outputting the top of the data table with the newly calculated 
-  #       output$output <- renderTable({
-  #         head(values$data)
-  #       })
-  #       
-  #       output$gofoutput <- renderTable({
-  #         collated_data <- cbind(values$stim_number_list, values$pre_stim_speed_list, values$max_rel_speed_list, values$max_speed_list, values$GOFs)
-  #         colnames(collated_data) <- c("Stim number", "Mean pre-stim speed", "Max relative amplitude", "Max fitted amplitude", "GOF")
-  #         collated_data
-  #       })
-  #       
-  #       # clear stimdata 
-  #       
-  #       stim_data <- c()
-  #       j <- j+1
-  #       
-  #       showNotification("Parameters should now be optimised.", type = "message")
-  #       cat("Parameters should now be optimised.\n")
-  #     }
-  #     #i <- i+1
-  #     
-  #   }
-  # })
   
   # Code to sequentially select individual flies and calculate curves for them 
   observeEvent(input$sequentialcalc, {
@@ -843,40 +660,42 @@ server <- function(input, output, session) {
           
           
           # Data needs to be tidied into long format
-          fly_data <- fly_data %>% 
+          fly_data <- fly_data %>%
             pivot_longer(!time, names_to = "Group", values_to = "speed")
-          # 60 second time window prior to stimulation taken to calculate the pre-stimulation speed
-          pre_stimuli_avg_speed <- mean(fly_data$speed[1:as.numeric(input$prestim)])
+          
+          # Stimulus onset for this stim, on the same clock as data$time
+          stim_time <- (i - 1) * as.numeric(input$stimgap) + as.numeric(input$pretime) * 60
+          
+          # Pre-stimulation baseline: everything in the window before stimulus onset
+          # (selected by time, not row index, so it doesn't assume 1 Hz sampling)
+          pre_stimuli_avg_speed <- mean(fly_data$speed[fly_data$time < stim_time], na.rm = TRUE)
           # Mean of pre-stimulation speed subtracted from raw speed to give relative speed. Necessary for
           # curve fitting.
           fly_data$relative_speed <- fly_data$speed - pre_stimuli_avg_speed
           
           showNotification(paste("Optimising parameters for", unique(fly_data$Group), sep = " "), type = "message")
           cat("Optimising parameters...\n")
-          # Optimizing parameters of the fitted exponential curve.
-          # Initial parameter estimates
-          initial_params <- c(dt = input$prestim, A0 = 0.1, A1 = 2, tauA = 0.1, tauB = 3)
           
-          optim_results <- optim(
-            par = initial_params,
-            fn = calculate_R_squared,
-            data = fly_data,
-            method = "L-BFGS-B",
-            lower = c(dt = fly_data$time[isolate(input$prestim)-isolate(input$dtflexibility)], A0 = 0, A1 = 0, tauA = -10, tauB = 0),
-            upper = c(dt = fly_data$time[isolate(input$prestim)+isolate(input$dtflexibility)], A0 = 10, A1 = 20, tauA = 20, tauB = 50),
-            control = list(maxit = 9999999)
+          fit <- fit_dart(
+            fly_data,
+            stim_time = stim_time,
+            flex      = as.numeric(isolate(input$dtflexibility)),
+            tauA_min  = as.numeric(isolate(input$tauA_min))
           )
           
-          optimized_params <- optim_results$par
-          names(optimized_params) <- c("dt", "A0", "A1", "tauA", "tauB")
-          
-          # Making a new column in data which contains the predicted speeds - i.e, the speeds calculated
-          # through the exponential model.
-          fly_data$predicted_speeds <- sapply(stim_data$time, function(t) model_function(t, optimized_params["dt"], optimized_params["A0"], optimized_params["A1"], optimized_params["tauA"], optimized_params["tauB"]))
-          fly_data$GOF <- -optim_results$value
+          # Predicted speeds from the fitted model (vectorised, on this fly's own time column)
+          fly_data$predicted_speeds <- model_function(fly_data$time, fit$dt, fit$A0, fit$A1, fit$tauA, fit$tauB)
+          fly_data$GOF <- fit$R2
           fly_data$StimNo <- values$stim_number
-          fly_data$tauA <- optimized_params[["tauA"]]
-          fly_data$tauB <- optimized_params[["tauB"]]
+          fly_data$dt <- fit$dt
+          fly_data$latency <- fit$latency
+          fly_data$A0 <- fit$A0
+          fly_data$A1 <- fit$A1
+          fly_data$tauA <- fit$tauA
+          fly_data$tauB <- fit$tauB
+          fly_data$tauA_at_lower <- fit$tauA_at_lower
+          fly_data$tauB_eq_tauA <- fit$tauB_eq_tauA
+          fly_data$any_at_bound <- fit$any_at_bound
           # Find the index of the maximum speeds
           max_index <- which.max(fly_data$predicted_speeds)
           max_index_rel <- which.max(fly_data$relative_speed)
@@ -891,8 +710,8 @@ server <- function(input, output, session) {
           values$data <- fly_data
           values$pre_stim_speed <- pre_stimuli_avg_speed
           values$pre_stim_speed_list <- c(values$pre_stim_speed_list, pre_stimuli_avg_speed)
-          values$optimized_params <- optim_results$par
-          values$optim_results <- optim_results
+          values$optimized_params <- unlist(fit[c("dt", "A0", "A1", "tauA", "tauB")])
+          values$R2 <- fit$R2
           values$max_time <- max_time
           values$max_speed <- max_speed
           values$max_speed_list <- c(values$max_speed_list, max_speed)
@@ -901,24 +720,41 @@ server <- function(input, output, session) {
           values$max_time_rel <- max_time_rel
           values$max_speed_rel <- max_speed_rel
           values$GOFs <- c(values$GOFs, fly_data$GOF[1])
-          values$tauA <- c(values$tauA, fly_data$tauA[1])
-          values$tauB <- c(values$tauB, fly_data$tauB[1])
           values$merged_data <- rbind(values$merged_data, values$data)
           
-          # Outputting the top of the data table with the newly calculated 
+          # One row per fly x stim. tauA is reported as NA when it sits on its
+          # lower bound: the activation is faster than the sampling resolves,
+          # so the number is the bound, not an estimate.
+          values$fit_table <- rbind(
+            values$fit_table,
+            data.frame(
+              Fly                      = unique(fly_data$Group),
+              `Stim number`            = values$stim_number,
+              `Mean pre-stim speed`    = pre_stimuli_avg_speed,
+              `Max relative amplitude` = max_speed_rel,
+              `Max fitted amplitude`   = max_speed,
+              GOF                      = fit$R2,
+              `Latency (s)`            = fit$latency,
+              A0                       = fit$A0,
+              A1                       = fit$A1,
+              tauA                     = if (fit$tauA_at_lower) NA_real_ else fit$tauA,
+              tauB                     = fit$tauB,
+              `tauA at floor`          = fit$tauA_at_lower,
+              `tauB = tauA`            = fit$tauB_eq_tauA,
+              `Any param at bound`     = fit$any_at_bound,
+              Converged                = fit$converged,
+              check.names = FALSE
+            )
+          )
+          
+          # Outputting the top of the data table with the newly calculated
           output$output <- renderTable({
             head(values$data)
           })
           
           output$gofoutput <- renderTable({
-            collated_data <- cbind(values$stim_number_list, values$pre_stim_speed_list, 
-                                   values$max_rel_speed_list, values$max_speed_list, 
-                                   values$GOFs, values$tauA, values$tauB)
-            colnames(collated_data) <- c("Stim number", "Mean pre-stim speed", 
-                                         "Max relative amplitude", "Max fitted amplitude", 
-                                         "GOF", "tauA", "tauB")
-            collated_data
-          })
+            values$fit_table
+          }, na = "< floor")
           
           # clear stimdata 
           
@@ -944,6 +780,109 @@ server <- function(input, output, session) {
     content = function(file) {
       req(values$merged_data)
       readr::write_csv(values$merged_data, file)
+    }
+  )
+  
+  # ---------------------------
+  # Individual fly inspection
+  # ---------------------------
+  
+  fly_ids <- reactive({
+    req(values$merged_data)
+    unique(values$merged_data$Group)
+  })
+  
+  # Keep the fly and stim choices in sync with whatever has been fitted so far
+  observe({
+    ids <- fly_ids()
+    current <- isolate(input$fly_select)
+    updateSelectInput(session, "fly_select", choices = ids,
+                      selected = if (!is.null(current) && current %in% ids) current else ids[1])
+    
+    stims <- sort(unique(values$merged_data$StimNo))
+    current_s <- isolate(input$fly_stims)
+    keep <- intersect(current_s, as.character(stims))
+    updateSelectInput(session, "fly_stims", choices = stims,
+                      selected = if (length(keep)) keep else stims)
+  })
+  
+  step_fly <- function(direction) {
+    ids <- fly_ids()
+    pos <- match(input$fly_select, ids)
+    if (is.na(pos)) pos <- 1
+    new <- ((pos - 1 + direction) %% length(ids)) + 1  # wraps around
+    updateSelectInput(session, "fly_select", selected = ids[new])
+  }
+  observeEvent(input$fly_prev, step_fly(-1))
+  observeEvent(input$fly_next, step_fly(+1))
+  
+  fly_subset <- reactive({
+    req(values$merged_data, input$fly_select, input$fly_stims)
+    values$merged_data %>%
+      filter(Group == input$fly_select, StimNo %in% as.numeric(input$fly_stims))
+  })
+  
+  output$fly_plot <- renderPlot({
+    d <- fly_subset()
+    validate(need(nrow(d) > 0, "No fitted data for this fly / stimulation."))
+    
+    stim_times <- stimulus_locations()[sort(unique(d$StimNo))]
+    onsets <- d %>% distinct(StimNo, dt)
+    
+    p <- ggplot(d, aes(x = time, colour = as.factor(StimNo), group = StimNo))
+    
+    if (isTRUE(input$fly_show_raw)) {
+      p <- p + geom_line(aes(y = speed), colour = "grey80", linewidth = input$rawlinewidth)
+    }
+    
+    p <- p +
+      geom_hline(yintercept = 0, colour = "grey60", linewidth = 0.3) +
+      geom_line(aes(y = relative_speed), colour = "black", linewidth = input$plotlinewidth) +
+      geom_line(aes(y = predicted_speeds), linewidth = input$fitlinewidth) +
+      geom_vline(xintercept = stim_times, linetype = "dashed", colour = "black", lwd = 0.5)
+    
+    if (isTRUE(input$fly_show_dt)) {
+      p <- p + geom_vline(data = onsets, aes(xintercept = dt, colour = as.factor(StimNo)),
+                          linetype = "dotted", lwd = 0.7, show.legend = FALSE)
+    }
+    
+    if (!isTRUE(input$fly_free_y)) {
+      p <- p + coord_cartesian(ylim = c(input$ylowlimit, input$ylimit))
+    }
+    
+    p +
+      labs(title = input$fly_select, x = "Time (seconds)", y = "Speed (mm/s)",
+           colour = "Stimulation number") +
+      theme(
+        legend.title = element_markdown(size = input$legendtitlefontsize, face = "bold"),
+        legend.text = element_markdown(face = "bold", size = input$legendtextfontsize),
+        legend.key.size = unit(input$keysize, "cm"),
+        legend.key.width = unit(input$keywidth, "cm"),
+        aspect.ratio = 0.625,
+        panel.background = element_blank(),
+        axis.text.x = element_text(size = input$axistextfontsize, face = "bold"),
+        axis.text.y = element_text(size = input$axistextfontsize, face = "bold"),
+        axis.ticks = element_line(linewidth = 1),
+        axis.title = element_text(face = "bold", size = input$axistitlefontsize),
+        # always show the fly ID here, even if the pooled plot title size is 0
+        plot.title = element_text(size = max(input$plottitlefontsize, 16), face = "bold", hjust = 0.5),
+        axis.line = element_line(colour = "black", linewidth = input$axislinewidth)
+      )
+  })
+  
+  output$fly_params <- renderTable({
+    req(values$fit_table, input$fly_select)
+    values$fit_table %>%
+      filter(Fly == input$fly_select, `Stim number` %in% as.numeric(input$fly_stims))
+  }, na = "< floor", digits = 3)
+  
+  output$download_fits <- downloadHandler(
+    filename = function() {
+      paste0("per_fly_fit_parameters_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      req(values$fit_table)
+      readr::write_csv(values$fit_table, file)
     }
   )
   
